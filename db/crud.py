@@ -89,7 +89,7 @@ class MenuDAL:
         query = update(SubMenu).where(SubMenu.id == target_submenu_id).values(**updated_submenu.model_dump())
         await self.db_session.execute(query)
         await self.db_session.flush()
-        query = select(Menu).where(SubMenu.id == target_submenu_id)
+        query = select(SubMenu).where(SubMenu.id == target_submenu_id)
         result = await self.db_session.execute(query)
         return result.scalar()
 
@@ -111,16 +111,24 @@ class MenuDAL:
 
     async def read_object(self, object_name: str, object_id: str, object_class):
         query = select(object_class).where(object_class.id == object_id)
-        if object_class is Dish:
-            object = (await self.db_session.execute(query)).scalar()
 
-        elif object_class is Menu:
-            query = query.options(joinedload(Menu.submenus).joinedload(SubMenu.dishes))
-            object = (await self.db_session.execute(query)).scalar()
+        if object_class is Menu:
+            query = query.options(joinedload(object_class.submenus).joinedload(SubMenu.dishes))
+
+        elif object_class is SubMenu:
+            query = query.options(joinedload(SubMenu.dishes))
+
+        object = (await self.db_session.execute(query)).scalar()
 
         if object is None:
             raise HTTPException(status_code=404, detail=f'{object_name} not found')
         return object
+    
+    async def read_objects(self, object_name: str, object_class):
+        query = select(object_class).options(joinedload(object_class.submenus).joinedload(SubMenu.dishes))
+        objects = (await self.db_session.execute(query)).scalars().unique()
+        return objects
+
 
 
     async def dish_read(self, target_dish_id) -> Dish:

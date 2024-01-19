@@ -1,3 +1,4 @@
+import logging
 from typing import List
 from uuid import UUID
 
@@ -7,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import JSONResponse
 
 from app.schemas import SubmenuRead, DishRead
-from db.models import Dish, Menu
+from db.models import Dish, Menu, SubMenu
 from db.session import get_db
 from app import schemas
 from db.crud import MenuDAL
@@ -18,14 +19,29 @@ main_router = APIRouter()
 @main_router.get("/menus", response_model=List[schemas.MenuRead])
 async def read_all_menus(db: AsyncSession = Depends(get_db)):
     menus = await _read_all_menus(db)
-    return [menu.get_counts() for menu in menus]
+    return [menu for menu in menus]
 
 async def _read_all_menus(db: AsyncSession):
     async with db as db_session:
         async with db_session.begin():
             menu_dal = MenuDAL(db_session)
-            menus = await menu_dal.read_all_menus()
-            return [schemas.MenuRead(**menu.__dict__) for menu in menus]
+            menus_db = await menu_dal.read_objects(object_name='menu', object_class=Menu)
+            result = []
+            for menu in menus_db:
+                menu_schema = schemas.MenuRead(**menu.__dict__)
+                submenus_schemas = []
+
+                for submenu in menu.submenus:
+                    submenu_schema = schemas.SubmenuRead(**submenu.__dict__)
+                    dish_schemas = [schemas.DishRead(**dish.__dict__).round_price() for dish in submenu.dishes]
+                    submenu_schema.dishes = dish_schemas
+                    submenu_schema.get_dishes_count()
+                    submenus_schemas.append(submenu_schema)
+
+                menu_schema.submenus = submenus_schemas
+                menu_schema.get_counts()
+                result.append(menu_schema)
+            return result
 
 
 @main_router.post('/menus', status_code=201, response_model=schemas.MenuRead)
@@ -50,9 +66,19 @@ async def _menu_read(target_id: UUID, db: AsyncSession) -> schemas.MenuRead:
     async with db as db_session:
         async with db_session.begin():
             menu_dal = MenuDAL(db_session=db_session)
-            menu = await menu_dal.read_object(object_id=target_id, object_name='menu', object_class=Menu)
-            print('-------Menu.dishes------->', menu.submenus)
-            return schemas.MenuRead(**menu.__dict__).get_counts()
+            menu_db = await menu_dal.read_object(object_id=target_id, object_name='menu', object_class=Menu)
+            menu_schema = schemas.MenuRead(**menu_db.__dict__)
+            submenus_schemas = []
+            for submenu in menu_db.submenus:
+                submenu_schema = schemas.SubmenuRead(**submenu.__dict__)
+                dish_schemas = [schemas.DishRead(**dish.__dict__).round_price() for dish in submenu.dishes]
+                submenu_schema.dishes = dish_schemas
+                submenu_schema.get_dishes_count()
+                submenus_schemas.append(submenu_schema)
+
+            menu_schema.submenus = submenus_schemas
+            menu_schema.get_counts()
+            return menu_schema
 
 @main_router.delete('/menus/{target_menu_id}', response_model=schemas.MenuIdOnly)
 async def menu_delete(target_menu_id: UUID, db: AsyncSession = Depends(get_db)):
@@ -155,7 +181,7 @@ async def _dish_delete(target_dish_id: str, db: AsyncSession) -> schemas.DishIdO
     async with db as db_session:
         async with db.begin():
             menu_dal = MenuDAL(db_session=db_session)
-            dish_object = await menu_dal.read_object(object_name='dish', object_id=target_dish_id, class_object=Dish)
+            dish_object = await menu_dal.read_object(object_name='dish', object_id=target_dish_id, object_class=Dish)
             deletion = await menu_dal.delete_object(dish_object)
             delete = deletion
             return schemas.DishIdOnly(id=target_dish_id)
@@ -204,8 +230,8 @@ async def _submenus_read(target_menu_id: str, db: AsyncSession) -> List[schemas.
     async with db as db_session:
         async with db_session.begin():
             menu_dal = MenuDAL(db_session=db_session)
-            submenu_list = await menu_dal.submenus_read(target_menu_id=target_menu_id)
-            return [schemas.SubmenuRead(**submenu.__dict__) for submenu in submenu_list]
+            menu = await menu_dal.read_object(object_name='menu', object_id=target_menu_id, object_class=Menu)
+            return [schemas.SubmenuRead(**submenu.__dict__).get_dishes_count() for submenu in menu.submenus]
 
 @main_router.post('/menus/{target_menu_id}/submenus', status_code=201, response_model=schemas.SubmenuRead)
 async def submenu_create(target_menu_id: str, submenu: schemas.SubmenuCreate, db: AsyncSession = Depends(get_db)):
@@ -226,12 +252,16 @@ async def submenu_read(target_menu_id: str, target_submenu_id: str, db: AsyncSes
     target_submenu = await _submenu_read(target_submenu_id, db=db)
     return target_submenu.get_dishes_count()
 
-async def _submenu_read(target_submenu_id: int, db: AsyncSession) -> schemas.SubmenuRead:
+
+## IMPORTANT BLYAT!
+async def _submenu_read(target_submenu_id: str, db: AsyncSession) -> schemas.SubmenuRead:
     async with db as db_session:
         async with db_session.begin():
             menu_DAL = MenuDAL(db_session=db_session)
-            target_submenu = await menu_DAL.submenu_read(target_submenu_id)
-            return schemas.SubmenuRead(**target_submenu.__dict__)
+            target_submenu = await menu_DAL.submenu_read(submenu_id=target_submenu_id)
+            submenu_schema = schemas.SubmenuRead(**target_submenu.__dict__)
+            submenu_schema.dishes = [schemas.DishRead(**dish.__dict__) for dish in target_submenu.dishes]
+            return submenu_schema
 
 
 @main_router.delete('/menus/{target_menu_id}/submenus/{target_submenu_id}', response_model=schemas.SubmenuIdOnly)

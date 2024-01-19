@@ -8,6 +8,7 @@ class TunedModel(BaseModel):
 
     class Config:
         from_attributes = True
+        orm_mode = True
 
 
 class DishRead(TunedModel):
@@ -60,7 +61,7 @@ class SubmenuRead(TunedModel):
     title: str
     description: str = 'description'
     dishes_count: int = 0
-    dishes: List[DishRead] | None = None
+    dishes: List[DishRead] | List = []
 
     def get_dishes_count(self):
         self.dishes_count = len(self.dishes)
@@ -75,13 +76,17 @@ class MenuRead(TunedModel):
     title: str
     dishes_count: int | None = 0
     submenus_count: int | None = 0
-    submenus: List[SubmenuRead] | None = None
+    submenus: List[SubmenuRead] | List = None
 
     def get_counts(self):
         self.submenus_count = len(self.submenus)
-        self.dishes_count = sum(len(submenu.dishes) for submenu in self.submenus)
-        self.submenus = [submenu.get_dishes_count() for submenu in self.submenus]
+        self.dishes_count = sum(submenu.dishes_count for submenu in self.submenus)
         return self
+
+class MenuListSchema(BaseModel):
+
+    menus: List[MenuRead]
+
 class MenuReadWithCount(MenuRead):
 
     submenus_count: int | None = 0
@@ -90,5 +95,6 @@ class MenuReadWithCount(MenuRead):
     def get_counts(self):
         self.submenus_count = len(self.submenus)
         self.dishes_count = sum(len(submenu.dishes) for submenu in self.submenus)
+
 
 
