@@ -13,10 +13,18 @@ async def _submenus_read(target_menu_id: UUID, db: AsyncSession) -> List[schemas
     async with db as db_session:
         async with db_session.begin():
             menu_dal = MenuDAL(db_session=db_session)
-            menu = await menu_dal.read_object(object_name='menu',
-                                              object_id=target_menu_id,
-                                              object_class=Menu)
-            return [schemas.SubmenuRead(**submenu.__dict__).get_dishes_count() for submenu in menu.submenus]
+            menu_db = await menu_dal.read_object(object_name='menu',
+                                                 object_id=target_menu_id,
+                                                 object_class=Menu)
+            submenus_schemas = []
+            for submenu in menu_db.submenus:
+                submenu_schema = schemas.SubmenuRead(**submenu.__dict__)
+                dish_schemas = [schemas.DishRead(**dish.__dict__).round_price() for dish in submenu.dishes]
+                submenu_schema.dishes = dish_schemas
+                submenu_schema.get_dishes_count()
+                submenus_schemas.append(submenu_schema)
+
+            return submenus_schemas
 
 
 @submenu_router.post('/menus/{target_menu_id}/submenus', status_code=201, response_model=schemas.SubmenuRead)
