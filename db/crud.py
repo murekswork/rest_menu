@@ -55,7 +55,7 @@ class MenuDAL:
 
         return objects.scalars().unique()
 
-    async def update_object(self, object_id, object_class, object_schema):
+    async def update_object(self, object_id: UUID, object_class, object_schema: schemas):
         check_exist_query = select(object_class).where(object_class.id == object_id)
         check_result = (await self.db_session.execute(check_exist_query)).scalar()
         if check_result is None:
@@ -67,7 +67,7 @@ class MenuDAL:
         result = (await self.db_session.execute(query)).scalar()
         return result
 
-    async def delete_object(self, object_class, object_id):
+    async def delete_object(self, object_class, object_id: UUID):
         check_exist_query = select(object_class).where(object_class.id == object_id)
         check_result = (await self.db_session.execute(check_exist_query)).scalar()
         if check_result is None:
