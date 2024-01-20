@@ -1,10 +1,11 @@
+import uuid
 from typing import List
 
+from sqlalchemy import UUID, String, ForeignKey, Float
 from sqlalchemy.orm import declarative_base, mapped_column, relationship, Mapped
-from sqlalchemy import UUID, String, Boolean, ForeignKey, Float, Integer, Uuid
-import uuid
 
 Base = declarative_base()
+
 
 class Menu(Base):
     __tablename__ = 'menus'
@@ -12,8 +13,8 @@ class Menu(Base):
     title: Mapped[String] = mapped_column(String(64), nullable=False)
     description: Mapped[String] = mapped_column(String(256), nullable=False)
 
-
     submenus: Mapped[List['SubMenu']] = relationship('SubMenu', back_populates='menu', cascade='all, delete')
+
 
 class SubMenu(Base):
     __tablename__ = 'submenus'
