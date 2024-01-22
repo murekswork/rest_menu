@@ -4,7 +4,8 @@ submenu_router = APIRouter()
 
 
 @submenu_router.get('/menus/{target_menu_id}/submenus', response_model=List[schemas.SubmenuRead])
-async def submenus_read(target_menu_id: UUID, db: AsyncSession = Depends(get_db)) -> List[schemas.SubmenuRead]:
+async def submenus_read(target_menu_id: UUID,
+                        db: AsyncSession = Depends(get_db)) -> List[schemas.SubmenuRead]:
     submenu_list = await _submenus_read(target_menu_id=target_menu_id, db=db)
     return submenu_list
 
@@ -27,7 +28,9 @@ async def _submenus_read(target_menu_id: UUID, db: AsyncSession) -> List[schemas
             return submenus_schemas
 
 
-@submenu_router.post('/menus/{target_menu_id}/submenus', status_code=201, response_model=schemas.SubmenuRead)
+@submenu_router.post('/menus/{target_menu_id}/submenus',
+                     status_code=201,
+                     response_model=schemas.SubmenuRead)
 async def submenu_create(target_menu_id: str, submenu_schema: schemas.SubmenuCreate,
                          db: AsyncSession = Depends(get_db)):
     submenu_schema_with_menu_id = schemas.SubmenuCreateWithMenuId(menu_id=target_menu_id, **submenu_schema.model_dump())

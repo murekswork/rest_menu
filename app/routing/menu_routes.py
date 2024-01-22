@@ -42,7 +42,8 @@ async def _menu_create(menu_schema: schemas.MenuCreate, db: AsyncSession) -> sch
     async with db as db_session:
         async with db_session.begin():
             menu_dal = MenuDAL(db_session=db_session)
-            new_menu = await menu_dal.create_object(object_class=Menu, object_schema=menu_schema)
+            new_menu = await menu_dal.create_object(object_class=Menu,
+                                                    object_schema=menu_schema)
             return schemas.MenuRead(**new_menu.__dict__)
 
 
@@ -56,7 +57,9 @@ async def _menu_read(target_menu_id: UUID, db: AsyncSession) -> schemas.MenuRead
     async with db as db_session:
         async with db_session.begin():
             menu_dal = MenuDAL(db_session=db_session)
-            object_db = await menu_dal.read_object(object_id=target_menu_id, object_name='menu', object_class=Menu)
+            object_db = await menu_dal.read_object(object_id=target_menu_id,
+                                                   object_name='menu',
+                                                   object_class=Menu)
             menu_schema = schemas.MenuRead(**object_db.__dict__)
             submenus_schemas = []
             for submenu in object_db.submenus:
@@ -86,12 +89,16 @@ async def _menu_delete(target_id: UUID, db: AsyncSession):
 
 
 @menu_router.patch('/menus/{target_menu_id}', status_code=200, response_model=schemas.MenuRead)
-async def menu_patch(target_menu_id: UUID, menu_update: schemas.MenuCreate, db: AsyncSession = Depends(get_db)):
+async def menu_patch(target_menu_id: UUID,
+                     menu_update: schemas.MenuCreate,
+                     db: AsyncSession = Depends(get_db)):
     update_menu = await _menu_patch(target_menu_id=target_menu_id, menu_update=menu_update, db=db)
     return update_menu
 
 
-async def _menu_patch(target_menu_id: UUID, menu_update: schemas.MenuCreate, db: AsyncSession) -> schemas.MenuRead:
+async def _menu_patch(target_menu_id: UUID,
+                      menu_update: schemas.MenuCreate,
+                      db: AsyncSession) -> schemas.MenuRead:
     async with db as db_session:
         async with db_session.begin():
             menu_dal = MenuDAL(db_session=db_session)
