@@ -60,6 +60,14 @@ class SubmenuIdOnly(BaseModel):
     submenu_id: UUID
 
 
+class MenuReadCounts(TunedModel):
+    id: UUID
+    title: str
+    description: str
+    submenus_count: int
+    dishes_count: int
+
+
 class MenuRead(TunedModel):
     id: UUID
     description: str

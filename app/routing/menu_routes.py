@@ -1,6 +1,26 @@
 from ..routers import *
+from db.utils import MenuUTIL
+from db.crud import MenuDAL
 
 menu_router = APIRouter()
+
+
+@menu_router.get('/menus/{menu_id}/counts', response_model=schemas.MenuReadCounts)
+async def read_menu_with_counts(menu_id: UUID, db: AsyncSession = Depends(get_db)):
+    menu = await _read_menu_with_counts(db, menu_id=menu_id)
+    return menu
+
+
+async def _read_menu_with_counts(db: AsyncSession, menu_id: UUID):
+    async with db as db_session:
+        async with db_session.begin():
+            menu_util = MenuUTIL(db_session=db)
+            menu = await menu_util.read_menu_with_counts(menu_id=menu_id)
+            return schemas.MenuReadCounts(id=menu.id,
+                                          title=menu.title,
+                                          description=menu.description,
+                                          dishes_count=menu.dish_count,
+                                          submenus_count=menu.submenu_count)
 
 
 @menu_router.get("/menus", response_model=List[schemas.MenuRead])

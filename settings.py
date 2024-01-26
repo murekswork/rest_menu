@@ -1,5 +1,5 @@
-from envparse import Env
+import os
 
-env = Env()
 
-REAL_DATABASE_URL = env.str('REAL_DATABASE_URL', default='postgresql+asyncpg://postgres:postgres@0.0.0.0:5432/postgres')
+REAL_DATABASE_URL = os.environ['REAL_DATABASE_URL']
+TEST_DATABASE_URL = os.environ['TEST_DATABASE_URL']

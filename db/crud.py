@@ -7,7 +7,13 @@ from app import schemas
 from .models import *
 
 
-class MenuDAL:
+class BaseDAL:
+
+    def __init__(self, db_session: AsyncSession) -> None:
+        self.db_session = db_session
+
+
+class MenuDAL(BaseDAL):
     '''
         ## Description
         The DAL (Database access layer) class provides CRUD (Create, Read, Update, Delete) methods for
@@ -32,8 +38,6 @@ class MenuDAL:
         to include additional functionality as needed. It encapsulates the logic for interacting with the database,
         making it easier to manage database operations within the application.
     '''
-    def __init__(self, db_session: AsyncSession) -> None:
-        self.db_session = db_session
 
     async def create_object(self, object_class, object_schema: schemas, parent_class=None, parent_id=None):
         '''

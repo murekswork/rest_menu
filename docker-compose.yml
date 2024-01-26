@@ -1,17 +1,71 @@
 version: '3.0'
 services:
-  db:
-    container_name: 'db_postgres'
-    image: postgres:14.1-alpine
-    restart: always
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=postgres
+  api:
+    build: .
+    container_name: 'api'
+    command: uvicorn main:app --host 0.0.0.0
     ports:
-      - 5432:5432
+      - 8000:8000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      postgres_test:
+        condition: service_healthy
+    volumes:
+      - ./.env:/api/.env
     networks:
       - custom
+    env_file:
+      - .env
+
+
+  postgres:
+    image: postgres:15.1-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB}
+      POSTGRES_HOST_AUTH_METHOD: ${DB_AUTH_METHOD}
+    user: postgres
+    ports:
+      - 5432:5432
+    expose:
+      - 5432
+    networks:
+      - custom
+    env_file:
+      - .env
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready", "-U", "${DB_USER}", "-d", "${DB}" ]
+      interval: 10s
+      timeout: 30s
+      retries: 5
+
+
+
+  postgres_test:
+    image: postgres:15.1-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_TEST_USER}
+      POSTGRES_PASSWORD: ${DB_TEST_PASSWORD}
+      POSTGRES_DB: ${DB_TEST}
+      POSTGRES_HOST_AUTH_METHOD: ${DB_TEST_AUTH_METHOD}
+
+    ports:
+      - 5433:5432
+    expose:
+      - 5433
+    networks:
+      - custom
+    env_file:
+      - .env
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d $${DB_TEST} -U $${DB_TEST_USER}"]
+      interval: 10s
+      timeout: 30s
+      retries: 5
 networks:
   custom:
     driver: bridge
