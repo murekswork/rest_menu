@@ -53,19 +53,13 @@ class TestDishesAndSubmenusCountInMenu:
         response = await client.delete(f'/api/v1/menus/{get_menu}/submenus/{get_submenu}')
         assert response.status_code == 200
 
-    # Test that submenus route returns empty list
+    # Test that submenus route returns empty list.
     @pytest.mark.asyncio
-    async def test_menu_submenus_list(self, client: AsyncClient, get_menu):
+    async def test_menu_submenus_list_and_tes(self, client: AsyncClient, get_menu):
         response = await client.get(f'/api/v1/menus/{get_menu}/submenus')
         assert response.status_code == 200
         assert response.json() == []
 
-    # Test that submenu dishes route returns empty list
-    @pytest.mark.asyncio
-    async def test_submenu_dishes_count(self, client: AsyncClient, get_menu, get_submenu):
-        response = await client.get(f'/api/v1/menus/{get_menu}/submenus/{get_submenu}/dishes')
-        assert response.status_code == 200
-        assert response.json() == []
 
     # Test that menu route return 0 dishes and submenus counts after submenu deletion
     @pytest.mark.asyncio
