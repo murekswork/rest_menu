@@ -3,7 +3,12 @@ services:
   api:
     build: .
     container_name: 'api'
-    command: uvicorn main:app --host 0.0.0.0
+    command: >
+      sh -c "alembic upgrade heads &&
+             alembic revision --autogenerate &&
+             alembic upgrade heads &&
+             uvicorn main:app --host 0.0.0.0"
+
     ports:
       - 8000:8000
     depends_on:
