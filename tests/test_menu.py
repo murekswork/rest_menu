@@ -5,13 +5,14 @@ from httpx import AsyncClient
 
 class TestMenu:
 
-
+    # Test that by default app does not have unexpected menus
     @pytest.mark.asyncio
     async def test_read_empty_menus(self, client: AsyncClient, clean_tables):
         response = await client.get("/api/v1/menus")
         assert response.status_code == 200
         assert response.json() == []
 
+    # Test that create app route works properly and created menu can have right fields
     @pytest.mark.asyncio
     async def test_create_menu(self, client: AsyncClient):
         response = await client.post("/api/v1/menus", json={"title": "test menu1",
@@ -27,13 +28,14 @@ class TestMenu:
         assert response.json()['submenus'] is None
         response = await client.get('/api/v1/menus')
 
+    # Test that after menu creation menus read route show created menu
     @pytest.mark.asyncio
     async def test_read_not_empy_menus(self, client: AsyncClient):
         response = await client.get("/api/v1/menus")
         assert response.json() != []
         assert response.status_code == 200
 
-
+    # Test that created menu can be read
     @pytest.mark.asyncio
     async def test_read_menu(self, client: AsyncClient):
         response = await client.post("/api/v1/menus", json={"title": "test title",
@@ -44,6 +46,7 @@ class TestMenu:
         assert response.json()['title'] == 'test title'
         assert response.json()['description'] == 'test description'
 
+    # Test that menu deletes route work properly
     @pytest.mark.asyncio
     async def test_delete_menu(self, client: AsyncClient, clean_tables):
         response = await client.post('/api/v1/menus', json={"title": "test",
@@ -57,6 +60,7 @@ class TestMenu:
         response = await client.get('/api/v1/menus')
         assert response.json() == []
 
+    # Test that menu update route work properly and changes are saving
     @pytest.mark.asyncio
     async def test_update_menu(self, client: AsyncClient, clean_tables):
         response = await client.post('/api/v1/menus', json={"title": "old title",
