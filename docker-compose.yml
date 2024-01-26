@@ -4,8 +4,7 @@ services:
     build: .
     container_name: 'api'
     command: >
-      sh -c "alembic upgrade heads &&
-             alembic revision --autogenerate &&
+      sh -c "alembic revision --autogenerate &&
              alembic upgrade heads &&
              uvicorn main:app --host 0.0.0.0"
 
