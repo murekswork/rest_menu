@@ -55,7 +55,7 @@ class TestDishesAndSubmenusCountInMenu:
 
     # Test that submenus route returns empty list.
     @pytest.mark.asyncio
-    async def test_menu_submenus_list_and_tes(self, client: AsyncClient, get_menu):
+    async def test_menu_submenus_list(self, client: AsyncClient, get_menu):
         response = await client.get(f'/api/v1/menus/{get_menu}/submenus')
         assert response.status_code == 200
         assert response.json() == []
