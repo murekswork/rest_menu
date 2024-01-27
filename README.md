@@ -29,5 +29,5 @@ docker-compose exec api /bin/bash
 cd tests
 pytest -s -v
 ```
-
+Тестовый сценарий из постмана находится в файле tests/test_dishes_and_submenus_count_in_menu.py
 
