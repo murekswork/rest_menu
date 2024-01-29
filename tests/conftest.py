@@ -1,4 +1,5 @@
 import sys
+
 sys.path.append("..")
 
 from typing import Generator, Any
@@ -13,7 +14,6 @@ import os
 import asyncio
 from db.session import get_db
 import asyncpg
-
 
 # create async engine for interaction with database
 test_engine = create_async_engine(settings.TEST_DATABASE_URL, future=True, echo=True)
@@ -35,9 +35,7 @@ def event_loop():
 
 @pytest.fixture(scope="session", autouse=True)
 async def run_migrations():
-    os.system("alembic init migrations")
-    os.system('alembic revision --autogenerate -m "test running migrations"')
-    os.system("alembic upgrade heads")
+    pass
 
 
 @pytest.fixture(scope="session")
@@ -56,12 +54,12 @@ async def clean_tables(async_session_test):
                 await session.execute(text(f"""TRUNCATE TABLE {table_for_cleaning} CASCADE;"""))
 
 
-
 async def _get_test_db():
     try:
         yield test_async_session()
     finally:
         pass
+
 
 @pytest.fixture(scope="function")
 async def client() -> Generator[AsyncClient, Any, None]:
@@ -94,14 +92,13 @@ async def get_menu(client: AsyncClient):
         yield str(response.json()[0]['id'])
 
 
-
 # Utility function to create or get existing submenu to work with dishes
 @pytest.fixture
 async def get_submenu(client: AsyncClient, get_menu):
     response = await client.get(f'/api/v1/menus/{get_menu}/submenus')
     if response.json() == []:
         new_submenu = await client.post(f'/api/v1/menus/{get_menu}/submenus', json={'title': 'New Submenu',
-                                                                              'description': 'New Submenu'})
+                                                                                    'description': 'New Submenu'})
         print(new_submenu.json())
         yield str(new_submenu.json()['id'])
     else:
