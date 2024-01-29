@@ -4,16 +4,13 @@ services:
     build: .
     container_name: 'api'
     command: >
-      sh -c "alembic revision --autogenerate &&
-             alembic upgrade heads &&
+      sh -c "alembic revision --autogenerate && alembic upgrade heads &&
              uvicorn main:app --host 0.0.0.0"
 
     ports:
       - 8000:8000
     depends_on:
       postgres:
-        condition: service_healthy
-      postgres_test:
         condition: service_healthy
     volumes:
       - ./.env:/api/.env
@@ -22,9 +19,29 @@ services:
     env_file:
       - .env
 
+  api_test:
+    build: .
+    container_name: api_test
+    command: >
+      sh -c "cd tests &&
+             alembic revision --autogenerate && 
+             alembic upgrade heads &&
+             pytest -s -v"
+    depends_on:
+      postgres_test:
+        condition: service_healthy
+      api:
+        condition: service_started
+    volumes:
+      - ./env:/api/.env
+    networks:
+      - test
+    env_file:
+      - .env
 
   postgres:
     image: postgres:15.1-alpine
+    container_name: 'postgres'
     restart: always
     environment:
       POSTGRES_USER: ${DB_USER}
@@ -50,6 +67,7 @@ services:
 
   postgres_test:
     image: postgres:15.1-alpine
+    container_name: 'postgres_test'
     restart: always
     environment:
       POSTGRES_USER: ${DB_TEST_USER}
@@ -62,7 +80,7 @@ services:
     expose:
       - 5433
     networks:
-      - custom
+      - test
     env_file:
       - .env
     healthcheck:
@@ -72,4 +90,6 @@ services:
       retries: 5
 networks:
   custom:
+    driver: bridge
+  test:
     driver: bridge
