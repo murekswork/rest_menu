@@ -99,7 +99,6 @@ async def get_submenu(client: AsyncClient, get_menu):
     if response.json() == []:
         new_submenu = await client.post(f'/api/v1/menus/{get_menu}/submenus', json={'title': 'New Submenu',
                                                                                     'description': 'New Submenu'})
-        print(new_submenu.json())
         yield str(new_submenu.json()['id'])
     else:
         yield str(response.json()[0]['id'])
