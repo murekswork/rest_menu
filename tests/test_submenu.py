@@ -9,6 +9,7 @@ class TestSubmenu:
     @pytest.mark.asyncio
     async def test_read_empty_menu_submenus(self, client: AsyncClient, clean_tables, get_menu):
         response = await client.get(f'/api/v1/menus/{get_menu}/submenus')
+        assert response.status_code == 200
         assert response.json() == []
 
     # Create submenu then read it
@@ -16,6 +17,7 @@ class TestSubmenu:
     async def test_create_submenu(self, client: AsyncClient, get_menu):
         response = await client.post(f'/api/v1/menus/{get_menu}/submenus', json={'title': 'test',
                                                                                  'description': 'test desc'})
+        assert response.status_code == 201
         assert response.json()['title'] == 'test'
         assert response.json()['description'] == 'test desc'
 
@@ -23,6 +25,7 @@ class TestSubmenu:
     @pytest.mark.asyncio
     async def test_read_menu_submenus(self, client: AsyncClient, get_menu):
         response = await client.get(f'/api/v1/menus/{get_menu}/submenus')
+        assert response.status_code == 200
         assert response.json() != []
 
     # Firstly create new submenu, then read this submenu
@@ -34,6 +37,7 @@ class TestSubmenu:
         submenu_id = str(submenu.json()['id'])
 
         response = await client.get(f'/api/v1/menus/{get_menu}/submenus/{submenu_id}')
+        assert response.status_code == 200
         assert response.json()['title'] == 'title'
         assert response.json()['description'] == 'description'
 
@@ -73,4 +77,5 @@ class TestSubmenu:
         check_submenu = await client.get(f'/api/v1/menus/{get_menu}/submenus/{submenu_id}')
         assert check_submenu.json() == {'detail': 'submenu not found'}
         menu_submenus = await client.get(f'/api/v1/menus/{get_menu}/submenus')
+        assert response.status_code == 200
         assert menu_submenus.json() == []
