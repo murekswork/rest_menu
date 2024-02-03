@@ -4,7 +4,6 @@ from uuid import UUID
 import aioredis
 from pydantic import BaseModel
 
-from app.schemas.dish_schemas import DishRead
 from app.schemas.menu_schemas import MenuRead, MenuReadCounts
 from app.schemas.submenu_schemas import SubmenuRead
 
@@ -33,6 +32,12 @@ class CacheService:
             return None
         result = await self.serialize_schema(value, schema)
         return result
+
+    async def get_model_list_cache(self, key: str | None, schema: type[BaseModel]):
+        cached_list = await self.cache.get(key)
+        if cached_list is None:
+            return None
+        return [schema(**json.loads(cache)) for cache in json.loads(cached_list)]
 
     async def set_model_cache(self, key: UUID, value: type[BaseModel]):
         await self.cache.set(str(key), await self.deserialize_schema(value))
@@ -70,7 +75,7 @@ class MenuCacheService(CacheService):
 class SubmenuCacheService(CacheService):
 
     async def invalidate_submenu_cache(self, submenu: SubmenuRead, menu_id):
-        ids = [menu_id, f'{menu_id}_submenus', f'{menu_id}_counts']
+        ids = [menu_id, f'{menu_id}_submenus', f'{menu_id}_counts', 'menus']
         if submenu.dishes:
             for dish in submenu.dishes:
                 ids.append(dish.id)
@@ -79,29 +84,22 @@ class SubmenuCacheService(CacheService):
             await self.cache.delete(str(id))
 
     async def update_submenu_cache(self, menu_id: UUID, submenu: SubmenuRead):
-        submenu.id = str(submenu.id)
+        [await self.cache.delete(str(key)) for key in ['menus',
+                                                       f'{menu_id}',
+                                                       f'{menu_id}_submenus',
+                                                       f'{menu_id}_counts',
+                                                       ]]
         await self.cache.set(str(submenu.id), await self.deserialize_schema(submenu))
-        await self.cache.delete(str(menu_id))
-        await self.cache.delete(f'{menu_id}_submenus')
-        await self.cache.delete(f'{menu_id}_counts')
-
-    async def get_submenu_list_cache(self, menu_id):
-        cached_list = await self.cache.get(f'{menu_id}_submenus')
-        if cached_list is None:
-            return None
-        return [SubmenuRead(**json.loads(submenu)) for submenu in json.loads(cached_list)]
 
 
 class DishCacheService(CacheService):
 
-    async def get_model_list_cache(self, submenu_id) -> list[DishRead] | None:
-        list = await self.cache.get(f'{submenu_id}_dishes')
-        if list is None:
-            return None
-        return [DishRead(**json.loads(dish)) for dish in json.loads(list)]
-
     async def invalidate_dish_cache(self, key: UUID, submenu_key: UUID, menu_key: UUID) -> None:
-        related_keys = [key, submenu_key, menu_key, f'{menu_key}_submenus', f'{menu_key}_counts',
-                        f'{submenu_key}_dishes']
-        for related_key in related_keys:
-            await self.cache.delete(str(related_key))
+        [await self.cache.delete(str(key)) for key in [key,
+                                                       menu_key,
+                                                       submenu_key,
+                                                       'menus'
+                                                       f'{menu_key}_counts',
+                                                       f'{menu_key}_submenus',
+                                                       f'{submenu_key}_dishes',
+                                                       ]]
