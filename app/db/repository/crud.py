@@ -65,21 +65,19 @@ class MenuCrud(Repository):
             check_parent_exist_query = select(parent_class).where(parent_class.id == parent_id)
             check_result = (await self.db_session.execute(check_parent_exist_query)).scalar()
             if check_result is None:
-                raise HTTPException(status_code=404, detail=f'{parent_class.__name__} not found')
+                raise HTTPException(status_code=404, detail=f'{parent_class.__name__.lower()} not found')
         new_object = object_class(**object_schema.model_dump())
         self.db_session.add(new_object)
         await self.db_session.flush()
         return new_object
 
     async def read_object(self,
-                          object_name: str,
                           object_id: UUID,
                           object_class: type[Menu | SubMenu | Dish]) -> Any:
         """
         The read_object function is used to retrieve an object from the database based on its name, ID, and class.
         It supports loading related objects based on the class type.
 
-        :param object_name: A string representing the name of the object.
         :param object_id: A UUID representing the ID of the object to be retrieved.
         :param object_class: The class of the object to be retrieved.
         :return: The function returns found object.
@@ -101,19 +99,15 @@ class MenuCrud(Repository):
         obj = (await self.db_session.execute(query)).scalar()
 
         if obj is None:
-            raise HTTPException(status_code=404, detail=f'{object_name} not found')
+            raise HTTPException(status_code=404, detail=f'{object_class.__name__.lower()} not found')
         return obj
 
-    async def read_objects(self,
-                           object_name: str,
-                           object_class: type[Menu | SubMenu | Dish],
-                           **ids) -> Any:
+    async def read_objects(self, object_class: type[Menu | SubMenu | Dish], **ids) -> Any:
         """
         The read_objects function is used to retrieve objects from the database based on their
         name, class, and additional IDs. It supports loading related objects based on the class type,
         such as submenus and dishes for menus.
 
-        :param object_name: A string representing the name of the object.
         :param object_class: The class of the object to be retrieved.
         :param ids: Additional keyword arguments representing the IDs required for retrieving related objects.
         :return: The function returns the retrieved objects from the database.
@@ -130,7 +124,7 @@ class MenuCrud(Repository):
         objects = (await self.db_session.execute(query))
 
         if objects is None:
-            raise HTTPException(status_code=404, detail=f'{object_name}s not found')
+            raise HTTPException(status_code=404, detail=f'{object_class.__name__.lower()}s not found')
 
         return objects.scalars().unique()
 
