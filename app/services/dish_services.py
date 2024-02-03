@@ -54,9 +54,7 @@ class DishService(BaseService):
 
         async with self.db as db_session:
             async with db_session.begin():
-                dishes = await self.database_manager.read_objects(submenu_id=target_id,
-                                                                  object_class=Dish,
-                                                                  object_name='dish')
+                dishes = await self.database_manager.read_objects(object_class=Dish, submenu_id=target_id)
 
                 dishes_schemas = [DishRead(**dish.__dict__) for dish in dishes]
                 await self.cache.set_list(f'{target_id}_dishes', dishes_schemas)
@@ -93,7 +91,6 @@ class DishService(BaseService):
         async with self.db as db_session:
             async with db_session.begin():
                 dish_db = await self.database_manager.read_object(object_id=target_id,
-                                                                  object_name='dish',
                                                                   object_class=Dish)
                 dish = DishRead(**dish_db.__dict__).round_price()
 

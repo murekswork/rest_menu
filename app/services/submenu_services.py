@@ -32,8 +32,7 @@ class SubmenuService(BaseService):
 
         async with self.db as db_session:
             async with db_session.begin():
-                menu_db = await self.database_manager.read_object(object_name='menu',
-                                                                  object_id=target_menu_id,
+                menu_db = await self.database_manager.read_object(object_id=target_menu_id,
                                                                   object_class=Menu)
                 submenus_schemas = []
                 for submenu in menu_db.submenus:
@@ -75,7 +74,6 @@ class SubmenuService(BaseService):
         async with self.db as db_session:
             async with db_session.begin():
                 target_submenu = await self.database_manager.read_object(object_id=target_submenu_id,
-                                                                         object_name='submenu',
                                                                          object_class=SubMenu)
                 submenu_schema = SubmenuRead(**target_submenu.__dict__)
                 submenu_schema.dishes = [DishRead(**dish.__dict__) for dish in target_submenu.dishes]
@@ -88,7 +86,6 @@ class SubmenuService(BaseService):
         async with self.db as db_session:
             async with db_session.begin():
                 submenu = await self.database_manager.read_object(object_id=target_submenu_id,
-                                                                  object_name='submenu',
                                                                   object_class=SubMenu)
                 await self.database_manager.delete_object(object_id=target_submenu_id, object_class=SubMenu)
 
