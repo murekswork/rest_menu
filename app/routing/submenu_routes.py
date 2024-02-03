@@ -68,7 +68,8 @@ async def submenu_read(
 
 @submenu_router.delete('/menus/{target_menu_id}/submenus/{target_submenu_id}',
                        status_code=200,
-                       response_model=SubmenuIdOnly)
+                       response_model=SubmenuIdOnly,
+                       name='submenu-delete')
 async def submenu_delete(
         target_menu_id: UUID,
         target_submenu_id: UUID,
