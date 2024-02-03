@@ -19,7 +19,7 @@ class Repository:
 class MenuCrud(Repository):
     """
         # Description
-        The DAL (Database access layer) class provides CRUD (Create, Read, Update, Delete) methods for
+        The MenuCrud class provides CRUD (Create, Read, Update, Delete) methods for
         interacting with a database, including creating, reading, updating, and deleting objects of VARIOUS classes.
 
         # Methods

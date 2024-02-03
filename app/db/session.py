@@ -1,4 +1,3 @@
-import logging
 from typing import AsyncGenerator
 
 import aioredis
@@ -22,11 +21,9 @@ async def get_db() -> AsyncGenerator:
 
 async def get_redis() -> AsyncGenerator:
     try:
-        logging.warning('Getting redis session...')
         redis = aioredis.ConnectionPool.from_url(
             'redis://redis:6379', decode_responses=True
         )
-        logging.warning('Redis connection pool initialized successfully :)')
         yield redis
     finally:
-        logging.warning('Could not initialize connection pool to redis!')
+        pass

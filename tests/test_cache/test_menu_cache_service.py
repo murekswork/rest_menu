@@ -34,7 +34,7 @@ class TestMenuCacheServiceCreate(TestMenuCacheService):
                                                              client: AsyncClient,
                                                              redis_client: aioredis.Redis,
                                                              clean_tables):
-        await client.get(await reverse('menus-read')).json()
+        await client.get(await reverse('menus-read'))
         old_menus_list_cache = (await redis_client.get('menus'))
         await client.post(await reverse('menu-create'),
                           json={'title': 'title', 'description': 'description'})

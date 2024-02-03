@@ -13,7 +13,7 @@ from app.schemas.dish_schemas import (
 )
 from app.services.dish_services import DishService
 
-dish_router = APIRouter()
+dish_router = APIRouter(tags=['dish-routers'])
 
 
 @dish_router.patch('/menus/{target_menu_id}/submenus/{target_submenu_id}/dishes/{target_dish_id}',
@@ -26,11 +26,11 @@ async def dish_patch(target_menu_id: UUID,
                      db: AsyncSession = Depends(get_db),
                      redis: aioredis.Redis = Depends(get_redis)) -> DishRead:
     service = DishService(db, redis)
-    dish = await service._dish_patch(target_id=target_dish_id,
-                                     dish_update=dish_update,
-                                     target_menu_id=target_menu_id,
-                                     target_submenu_id=target_submenu_id
-                                     )
+    dish = await service.patch(target_id=target_dish_id,
+                               dish_update=dish_update,
+                               target_menu_id=target_menu_id,
+                               target_submenu_id=target_submenu_id
+                               )
     return dish
 
 
@@ -43,7 +43,7 @@ async def list_dishes(target_menu_id: UUID,
                       db: AsyncSession = Depends(get_db),
                       redis: aioredis.Redis = Depends(get_redis)) -> list[DishRead]:
     service = DishService(db, redis)
-    dishes = await service._list_dishes(target_id=target_submenu_id)
+    dishes = await service.read_many(target_id=target_submenu_id)
     return dishes
 
 
@@ -59,9 +59,9 @@ async def dish_create(target_menu_id: UUID,
     dish_schema = DishCreateWithSubmenuId(**dish_schema.model_dump(),
                                           submenu_id=target_submenu_id)
     service = DishService(db, redis)
-    new_dish = await service._dish_create(dish_schema,
-                                          target_menu_id,
-                                          target_submenu_id)
+    new_dish = await service.create(dish_schema,
+                                    target_menu_id,
+                                    target_submenu_id)
     return new_dish
 
 
@@ -75,9 +75,9 @@ async def dish_delete(target_dish_id: UUID,
                       db: AsyncSession = Depends(get_db),
                       redis: aioredis.Redis = Depends(get_redis)) -> DishIdOnly:
     service = DishService(db, redis)
-    delete_dish = await service._dish_delete(target_id=target_dish_id,
-                                             target_submenu_id=target_submenu_id,
-                                             target_menu_id=target_menu_id)
+    delete_dish = await service.delete(target_id=target_dish_id,
+                                       target_submenu_id=target_submenu_id,
+                                       target_menu_id=target_menu_id)
     return delete_dish
 
 
@@ -90,5 +90,5 @@ async def dish_read(target_menu_id: UUID,
                     db: AsyncSession = Depends(get_db),
                     redis: aioredis.Redis = Depends(get_redis)) -> DishRead:
     service = DishService(db, redis)
-    dish = await service._dish_read(target_id=target_dish_id)
+    dish = await service.read(target_id=target_dish_id)
     return dish

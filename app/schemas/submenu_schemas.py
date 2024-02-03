@@ -20,7 +20,7 @@ class SubmenuRead(TunedModel):
     title: str
     description: str = 'description'
     dishes_count: int = 0
-    dishes: list[DishRead] | list = []
+    dishes: list[DishRead] = []
 
     def get_dishes_count(self):
         self.dishes_count = len(self.dishes)
