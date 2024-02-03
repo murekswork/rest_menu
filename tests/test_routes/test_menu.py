@@ -8,7 +8,7 @@ class TestMenu:
 
     # Test that by default app does not have unexpected menus
     @pytest.mark.asyncio
-    async def test_read_empty_menus(self, client: AsyncClient, clean_tables):
+    async def test_read_empty_menus(self, client: AsyncClient, clean_tables, clean_cache):
         response = await client.get(await reverse('menus-read'))
         assert response.status_code == 200
         assert response.json() == []

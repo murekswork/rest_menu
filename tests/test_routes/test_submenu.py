@@ -1,3 +1,5 @@
+import logging
+
 import pytest
 from httpx import AsyncClient
 
@@ -14,8 +16,8 @@ class TestSubmenu:
     # Create submenu then read it
     @pytest.mark.asyncio
     async def test_create_submenu(self, client: AsyncClient, get_menu):
-        response = await client.post(f'/api/v1/menus/{get_menu}/submenus', json={'title': 'test',
-                                                                                 'description': 'test desc'})
+        response = await client.post(f'/api/v1/menus/{get_menu}/submenus',
+                                     json={'title': 'test', 'description': 'test desc'})
         assert response.status_code == 201
         assert response.json()['title'] == 'test'
         assert response.json()['description'] == 'test desc'
@@ -29,10 +31,11 @@ class TestSubmenu:
 
     # Firstly create new submenu, then read this submenu
     @pytest.mark.asyncio
-    async def test_read_submenu(self, client: AsyncClient, clean_tables, get_menu):
+    async def test_read_submenu(self, client: AsyncClient, clean_tables, clean_cache, get_menu):
+        logging.warning(f'{get_menu} its menu id !!!!!!!!!!!!')
         submenu = await client.post(f'/api/v1/menus/{get_menu}/submenus',
-                                    json={'title': 'title',
-                                          'description': 'description'})
+                                    json={'title': 'title', 'description': 'description'})
+        logging.warning(f'submenu: {submenu.json()} <--------------!!!!!')
         submenu_id = str(submenu.json()['id'])
 
         response = await client.get(f'/api/v1/menus/{get_menu}/submenus/{submenu_id}')

@@ -32,7 +32,12 @@ class TestDishes:
 
     # Test read created dish can be read. Firstly create dish then try to read it
     @pytest.mark.asyncio
-    async def test_read_submenu_without_dishes(self, clean_tables, client: AsyncClient, get_menu, get_submenu):
+    async def test_read_submenu_without_dishes(self,
+                                               clean_tables,
+                                               clean_cache,
+                                               client: AsyncClient,
+                                               get_menu,
+                                               get_submenu):
         dish = await client.post(f'/api/v1/menus/{get_menu}/submenus/{get_submenu}/dishes',
                                  json={'title': 'title',
                                        'description': 'description',
@@ -47,7 +52,7 @@ class TestDishes:
     # Test that dish can be updated. Firstly create dish, then read old values, then patch and get new values
 
     @pytest.mark.asyncio
-    async def test_patch_dish(self, client: AsyncClient, clean_tables, get_menu, get_submenu):
+    async def test_patch_dish(self, client: AsyncClient, clean_tables, clean_cache, get_menu, get_submenu):
         response = await client.post(f'/api/v1/menus/{get_menu}/submenus/{get_submenu}/dishes',
                                      json={'title': 'title',
                                            'description': 'description',
@@ -73,7 +78,7 @@ class TestDishes:
     # Test delete created dish
 
     @pytest.mark.asyncio
-    async def test_put_dish(self, client: AsyncClient, clean_tables, get_menu, get_submenu):
+    async def test_put_dish(self, client: AsyncClient, clean_tables, clean_cache, get_menu, get_submenu):
         response = await client.post(f'/api/v1/menus/{get_menu}/submenus/{get_submenu}/dishes',
                                      json={'title': 'new title',
                                            'description': 'new description',
