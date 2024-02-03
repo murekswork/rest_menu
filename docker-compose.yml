@@ -25,7 +25,8 @@ services:
     build: .
     container_name: api_tes
     command: >
-      sh -c "cd tests &&
+      sh -c "export PYTHONPATH=/code &&
+             cd tests &&
              alembic revision --autogenerate &&
              alembic upgrade heads &&
              pytest -s -v"
