@@ -25,7 +25,7 @@ class SubmenuService(BaseService):
         Function takes menu id and sends it to cache manager, returns list of submenus if are in
         else function sends id to database manager, then return list of submenus if are in
         """
-        cached = await self.cache_manager.get_submenu_list_cache(f'{target_menu_id}_submenus')
+        cached = await self.cache_manager.get_model_list_cache(f'{target_menu_id}_submenus', SubmenuRead)
         if cached is not None:
             return cached
 

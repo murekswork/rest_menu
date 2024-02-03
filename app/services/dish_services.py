@@ -40,7 +40,7 @@ class DishService(BaseService):
                 return dish
 
     async def _list_dishes(self, target_id: UUID) -> list[DishRead]:
-        cached = await self.cache.get_model_list_cache(target_id)
+        cached = await self.cache.get_model_list_cache(f'{target_id}_dishes', DishRead)
         if cached is not None:
             return cached
 

@@ -36,6 +36,10 @@ class MenuService(BaseService):
                 return menu_schema
 
     async def _read_all_menus(self):
+        cached = await self.cache_manager.get_model_list_cache(key='menus', schema=MenuRead)
+        if cached is not None:
+            return cached
+
         async with self.db as db_session:
             async with db_session.begin():
                 menu_dal = MenuCrud(db_session)
@@ -57,7 +61,7 @@ class MenuService(BaseService):
                     menu_schema.get_counts()
                     result.append(menu_schema)
 
-                # await self.cache_manager.set_list('menus', result)
+                await self.cache_manager.set_list('menus', result)
                 return result
 
     async def _menu_create(self, menu_schema: menu_schemas.MenuCreate) -> menu_schemas.MenuRead:
