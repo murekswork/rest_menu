@@ -56,6 +56,11 @@ async def clean_tables(async_session_test):
                 await session.execute(text(f"""TRUNCATE TABLE {table_for_cleaning} CASCADE;"""))
 
 
+@pytest.fixture(scope='function')
+async def clean_cache(redis_client: aioredis.Redis):
+    await redis_client.flushdb()
+
+
 async def _get_test_db():
     try:
         yield test_async_session()
