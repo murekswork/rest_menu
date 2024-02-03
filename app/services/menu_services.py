@@ -52,7 +52,7 @@ class MenuService(BaseService):
 
         async with self.db as db_session:
             async with db_session.begin():
-                menus_db = await self.database_manager.read_objects(object_name='menu', object_class=Menu)
+                menus_db = await self.database_manager.read_objects(object_class=Menu)
                 result = []
                 for menu in menus_db:
                     menu_schema = MenuRead(**menu.__dict__)
@@ -97,7 +97,6 @@ class MenuService(BaseService):
         async with self.db as db_session:
             async with db_session.begin():
                 object_db = await self.database_manager.read_object(object_id=target_id,
-                                                                    object_name='menu',
                                                                     object_class=Menu)
                 menu_schema = MenuRead(**object_db.__dict__)
                 submenus_schemas = []
@@ -122,7 +121,6 @@ class MenuService(BaseService):
         async with self.db as db_session:
             async with db_session.begin():
                 menu = await self.database_manager.read_object(object_id=target_id,
-                                                               object_name='menu',
                                                                object_class=Menu)
                 await self.cache_manager.invalidate_menu_cache(MenuRead(**menu.__dict__))
 
