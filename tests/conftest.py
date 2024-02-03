@@ -1,19 +1,21 @@
+import asyncio
+import logging
 import sys
+from typing import Any, AsyncGenerator
 
-sys.path.append("..")
-
-from typing import Generator, Any
+import aioredis
+import asyncpg
 import pytest
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import text
-from httpx import AsyncClient
+
 import settings
+from app.db.session import get_db
 from main import app
-import os
-import asyncio
-from db.session import get_db
-import asyncpg
+
+sys.path.append('..')
 
 # create async engine for interaction with database
 test_engine = create_async_engine(settings.TEST_DATABASE_URL, future=True, echo=True)
@@ -22,30 +24,30 @@ test_engine = create_async_engine(settings.TEST_DATABASE_URL, future=True, echo=
 test_async_session = sessionmaker(test_engine, expire_on_commit=False, class_=AsyncSession)
 
 CLEAN_TABLES = [
-    "menus", 'submenus', 'dishes'
+    'menus', 'submenus', 'dishes'
 ]
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope='session')
 def event_loop():
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
     loop.close()
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope='session', autouse=True)
 async def run_migrations():
     pass
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope='session')
 async def async_session_test():
     engine = create_async_engine(settings.TEST_DATABASE_URL, future=True, echo=True)
     async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
     yield async_session
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope='function')
 async def clean_tables(async_session_test):
     """Clean data in all tables before running test function"""
     async with async_session_test() as session:
@@ -61,8 +63,26 @@ async def _get_test_db():
         pass
 
 
-@pytest.fixture(scope="function")
-async def client() -> Generator[AsyncClient, Any, None]:
+async def get_redis():
+    try:
+        logging.warning('Getting redis session...')
+        redis = aioredis.ConnectionPool.from_url(
+            'redis://redis:6379', decode_responses=True
+        )
+        logging.warning('Redis connection pool initialized successfully :)')
+        return redis
+    finally:
+        logging.warning('Could not initialize connection pool to redis!')
+
+
+@pytest.fixture(scope='session')
+async def redis_client() -> AsyncGenerator:
+    async with aioredis.Redis(connection_pool=await get_redis()) as redis:
+        yield redis
+
+
+@pytest.fixture(scope='function')
+async def client() -> AsyncGenerator[AsyncClient, Any]:
     """
     Create a new FastAPI TestClient that uses the `db_session` fixture to override
     the `get_db` dependency that is injected into routes.
@@ -73,9 +93,9 @@ async def client() -> Generator[AsyncClient, Any, None]:
         yield client
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope='session')
 async def asyncpg_pool():
-    pool = await asyncpg.create_pool("".join(settings.TEST_DATABASE_URL.split("+asyncpg")))
+    pool = await asyncpg.create_pool(''.join(settings.TEST_DATABASE_URL.split('+asyncpg')))
     yield pool
     pool.close()
 

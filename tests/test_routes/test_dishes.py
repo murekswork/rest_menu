@@ -1,11 +1,8 @@
-import json
 import pytest
 from httpx import AsyncClient
 
 
 class TestDishes:
-
-
 
     # Test that created submenu does not have dishes
     @pytest.mark.asyncio
@@ -47,14 +44,14 @@ class TestDishes:
         assert response.json()['description'] == 'description'
         assert response.json()['price'] == '123.00'
 
-
     # Test that dish can be updated. Firstly create dish, then read old values, then patch and get new values
+
     @pytest.mark.asyncio
     async def test_patch_dish(self, client: AsyncClient, clean_tables, get_menu, get_submenu):
         response = await client.post(f'/api/v1/menus/{get_menu}/submenus/{get_submenu}/dishes',
-                                 json={'title': 'title',
-                                       'description': 'description',
-                                       'price': 123})
+                                     json={'title': 'title',
+                                           'description': 'description',
+                                           'price': 123})
         assert response.status_code == 201
         old_dish = response.json()
         old_dish_id = str(old_dish['id'])
@@ -73,8 +70,8 @@ class TestDishes:
         assert response.json()['price'] == '321.00'
         assert str(response.json()['id']) == old_dish_id
 
-
     # Test delete created dish
+
     @pytest.mark.asyncio
     async def test_put_dish(self, client: AsyncClient, clean_tables, get_menu, get_submenu):
         response = await client.post(f'/api/v1/menus/{get_menu}/submenus/{get_submenu}/dishes',
@@ -91,9 +88,3 @@ class TestDishes:
         assert response.status_code == 404
         response = await client.get(f'/api/v1/menus/{get_menu}/submenus/{get_submenu}/dishes')
         assert response.json() == []
-
-
-
-
-
-

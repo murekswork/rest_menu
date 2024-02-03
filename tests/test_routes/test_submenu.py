@@ -1,4 +1,3 @@
-import json
 import pytest
 from httpx import AsyncClient
 
@@ -7,7 +6,7 @@ class TestSubmenu:
 
     # Test if created menu have not submenus
     @pytest.mark.asyncio
-    async def test_read_empty_menu_submenus(self, client: AsyncClient, clean_tables, get_menu):
+    async def test_read_menu_submenus_when_empty(self, client: AsyncClient, clean_tables, get_menu):
         response = await client.get(f'/api/v1/menus/{get_menu}/submenus')
         assert response.status_code == 200
         assert response.json() == []
@@ -23,7 +22,7 @@ class TestSubmenu:
 
     # Test if created submenu appears in menu submenus
     @pytest.mark.asyncio
-    async def test_read_menu_submenus(self, client: AsyncClient, get_menu):
+    async def test_read_menu_submenus_when_not_empty(self, client: AsyncClient, get_menu):
         response = await client.get(f'/api/v1/menus/{get_menu}/submenus')
         assert response.status_code == 200
         assert response.json() != []

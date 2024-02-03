@@ -1,5 +1,4 @@
 import pytest
-import json
 from httpx import AsyncClient
 
 
@@ -60,8 +59,8 @@ class TestDishesAndSubmenusCountInMenu:
         assert response.status_code == 200
         assert response.json() == []
 
-
     # Test that menu route return 0 dishes and submenus counts after submenu deletion
+
     @pytest.mark.asyncio
     async def test_menu_after_submenu_delete(self, client: AsyncClient, get_menu):
         response = await client.get(f'/api/v1/menus/{get_menu}/counts')
@@ -78,6 +77,6 @@ class TestDishesAndSubmenusCountInMenu:
     # Test that menus route return empty list after deletion
     @pytest.mark.asyncio
     async def test_menus_list(self, client: AsyncClient):
-        response = await client.get(f'/api/v1/menus')
+        response = await client.get('/api/v1/menus')
         assert response.status_code == 200
         assert response.json() == []

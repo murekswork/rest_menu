@@ -1,142 +1,83 @@
-from ..routers import *
-from db.utils import MenuUTIL
-from db.crud import MenuDAL
+from uuid import UUID
+
+import aioredis
+from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.db.session import get_db, get_redis
+from app.schemas.menu_schemas import MenuCreate, MenuIdOnly, MenuRead, MenuReadCounts
+from app.services.menu_services import MenuService
 
 menu_router = APIRouter()
 
 
-@menu_router.get('/menus/{menu_id}/counts', response_model=schemas.MenuReadCounts)
-async def read_menu_with_counts(menu_id: UUID, db: AsyncSession = Depends(get_db)):
-    menu = await _read_menu_with_counts(db, menu_id=menu_id)
+@menu_router.get('/menus/{target_menu_id}/counts',
+                 status_code=200,
+                 response_model=MenuReadCounts,
+                 name='menu-read-counts')
+async def read_menu_with_counts(target_menu_id: UUID,
+                                db: AsyncSession = Depends(get_db),
+                                redis: aioredis.Redis = Depends(get_redis)) -> MenuReadCounts:
+    service = MenuService(db, redis)
+    menu = await service._read_menu_with_counts(target_id=target_menu_id)
     return menu
 
 
-async def _read_menu_with_counts(db: AsyncSession, menu_id: UUID):
-    async with db as db_session:
-        async with db_session.begin():
-            menu_util = MenuUTIL(db_session=db)
-            menu = await menu_util.read_menu_with_counts(menu_id=menu_id)
-            return schemas.MenuReadCounts(id=menu.id,
-                                          title=menu.title,
-                                          description=menu.description,
-                                          dishes_count=menu.dish_count,
-                                          submenus_count=menu.submenu_count)
-
-
-@menu_router.get("/menus", response_model=List[schemas.MenuRead])
-async def read_all_menus(db: AsyncSession = Depends(get_db)):
-    menus = await _read_all_menus(db)
+@menu_router.get('/menus',
+                 status_code=200,
+                 response_model=list[MenuRead],
+                 name='menus-read')
+async def read_all_menus(db: AsyncSession = Depends(get_db),
+                         redis: aioredis.Redis = Depends(get_redis)) -> list[MenuRead]:
+    service = MenuService(db, redis)
+    menus = await service._read_all_menus()
     return [menu for menu in menus]
 
 
-async def _read_all_menus(db: AsyncSession):
-    async with db as db_session:
-        async with db_session.begin():
-            menu_dal = MenuDAL(db_session)
-            menus_db = await menu_dal.read_objects(object_name='menu', object_class=Menu)
-            result = []
-            for menu in menus_db:
-                menu_schema = schemas.MenuRead(**menu.__dict__)
-                submenus_schemas = []
-
-                for submenu in menu.submenus:
-                    submenu_schema = schemas.SubmenuRead(**submenu.__dict__)
-                    dish_schemas = [schemas.DishRead(**dish.__dict__).round_price() for dish in submenu.dishes]
-                    submenu_schema.dishes = dish_schemas
-                    submenu_schema.get_dishes_count()
-                    submenus_schemas.append(submenu_schema)
-
-                menu_schema.submenus = submenus_schemas
-                menu_schema.get_counts()
-                result.append(menu_schema)
-            return result
-
-
-@menu_router.post('/menus', status_code=201, response_model=schemas.MenuRead)
-async def menu_create(menu_schema: schemas.MenuCreate, db: AsyncSession = Depends(get_db)):
-    new_menu = await _menu_create(menu_schema, db)
+@menu_router.post('/menus',
+                  status_code=201,
+                  response_model=MenuRead,
+                  name='menu-create')
+async def menu_create(menu_schema: MenuCreate,
+                      db: AsyncSession = Depends(get_db),
+                      redis: aioredis.Redis = Depends(get_redis)):
+    service = MenuService(db, redis)
+    new_menu = await service._menu_create(menu_schema)
     return new_menu
 
 
-async def _menu_create(menu_schema: schemas.MenuCreate, db: AsyncSession) -> schemas.MenuRead:
-    async with db as db_session:
-        async with db_session.begin():
-            menu_dal = MenuDAL(db_session=db_session)
-            new_menu = await menu_dal.create_object(object_class=Menu,
-                                                    object_schema=menu_schema)
-            return schemas.MenuRead(**new_menu.__dict__)
-
-
-@menu_router.get('/menus/{target_menu_id}', response_model=schemas.MenuRead)
-async def menu_read(target_menu_id: UUID, db: AsyncSession = Depends(get_db)):
-    menu = await _menu_read(target_menu_id=target_menu_id, db=db)
+@menu_router.get('/menus/{target_menu_id}',
+                 status_code=200,
+                 response_model=MenuRead,
+                 name='menu-read')
+async def menu_read(target_menu_id: UUID,
+                    db: AsyncSession = Depends(get_db),
+                    redis: aioredis.Redis = Depends(get_redis)) -> MenuRead:
+    service = MenuService(db, redis)
+    menu = await service._menu_read(target_id=target_menu_id)
     return menu
 
 
-async def _menu_read(target_menu_id: UUID, db: AsyncSession) -> schemas.MenuRead:
-    async with db as db_session:
-        async with db_session.begin():
-            menu_dal = MenuDAL(db_session=db_session)
-            object_db = await menu_dal.read_object(object_id=target_menu_id,
-                                                   object_name='menu',
-                                                   object_class=Menu)
-            menu_schema = schemas.MenuRead(**object_db.__dict__)
-            submenus_schemas = []
-            for submenu in object_db.submenus:
-                submenu_schema = schemas.SubmenuRead(**submenu.__dict__)
-                dish_schemas = [schemas.DishRead(**dish.__dict__).round_price() for dish in submenu.dishes]
-                submenu_schema.dishes = dish_schemas
-                submenu_schema.get_dishes_count()
-                submenus_schemas.append(submenu_schema)
-
-            menu_schema.submenus = submenus_schemas
-            menu_schema.get_counts()
-            return menu_schema
-
-
-@menu_router.delete('/menus/{target_menu_id}', response_model=schemas.MenuIdOnly)
-async def menu_delete(target_menu_id: UUID, db: AsyncSession = Depends(get_db)):
-    delete_menu = await _menu_delete(target_id=target_menu_id, db=db)
-    return delete_menu
-
-
-async def _menu_delete(target_id: UUID, db: AsyncSession):
-    async with db as db_session:
-        async with db_session.begin():
-            menu_dal = MenuDAL(db_session=db_session)
-            deletion = await menu_dal.delete_object(object_class=Menu, object_id=target_id)
-            return schemas.MenuIdOnly(menu_id=target_id)
-
-
-@menu_router.patch('/menus/{target_menu_id}', status_code=200, response_model=schemas.MenuRead)
+@menu_router.patch('/menus/{target_menu_id}',
+                   status_code=200,
+                   response_model=MenuRead,
+                   name='menu-patch')
 async def menu_patch(target_menu_id: UUID,
-                     menu_update: schemas.MenuCreate,
-                     db: AsyncSession = Depends(get_db)):
-    update_menu = await _menu_patch(target_menu_id=target_menu_id, menu_update=menu_update, db=db)
+                     menu_update: MenuCreate,
+                     db: AsyncSession = Depends(get_db),
+                     redis: aioredis.Redis = Depends(get_redis)) -> MenuRead:
+    service = MenuService(db, redis)
+    update_menu = await service._menu_patch(target_id=target_menu_id, menu_update=menu_update)
     return update_menu
 
 
-async def _menu_patch(target_menu_id: UUID,
-                      menu_update: schemas.MenuCreate,
-                      db: AsyncSession) -> schemas.MenuRead:
-    async with db as db_session:
-        async with db_session.begin():
-            menu_dal = MenuDAL(db_session=db_session)
-            update_result = await menu_dal.update_object(object_class=Menu,
-                                                         object_id=target_menu_id,
-                                                         object_schema=menu_update)
-            return schemas.MenuRead(**update_result.__dict__)
-
-
-@menu_router.delete('/menus/{target_menu_id}', response_model=schemas.MenuIdOnly)
-async def menu_delete(target_menu_id: UUID, db: AsyncSession = Depends(get_db)):
-    delete_menu = await _menu_delete(target_id=target_menu_id, db=db)
+@menu_router.delete('/menus/{target_menu_id}',
+                    status_code=200,
+                    response_model=MenuIdOnly,
+                    name='menu-delete')
+async def menu_delete(target_menu_id: UUID,
+                      db: AsyncSession = Depends(get_db),
+                      redis: aioredis.Redis = Depends(get_redis)) -> MenuIdOnly:
+    service = MenuService(db, redis)
+    delete_menu = await service._menu_delete(target_id=target_menu_id)
     return delete_menu
-
-
-async def _menu_delete(target_id: UUID, db: AsyncSession):
-    async with db as db_session:
-        async with db_session.begin():
-            menu_dal = MenuDAL(db_session=db_session)
-            deletion = await menu_dal.delete_object(object_class=Menu, object_id=target_id)
-            return schemas.MenuIdOnly(menu_id=target_id)

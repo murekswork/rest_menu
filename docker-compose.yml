@@ -12,6 +12,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_started
     volumes:
       - ./.env:/api/.env
     networks:
@@ -21,16 +23,16 @@ services:
 
   api_test:
     build: .
-    container_name: api_test
+    container_name: api_tes
     command: >
       sh -c "cd tests &&
-             alembic revision --autogenerate && 
+             alembic revision --autogenerate &&
              alembic upgrade heads &&
              pytest -s -v"
     depends_on:
       postgres_test:
         condition: service_healthy
-      api:
+      redis:
         condition: service_started
     volumes:
       - ./env:/api/.env
@@ -63,11 +65,21 @@ services:
       timeout: 30s
       retries: 5
 
+  redis:
+    image: redis:latest
+    hostname: redis
+    ports:
+      - 6379:6379
+    networks:
+      - custom
+      - test
+
+
 
 
   postgres_test:
     image: postgres:15.1-alpine
-    container_name: 'postgres_test'
+    container_name: 'postgres_tes'
     restart: always
     environment:
       POSTGRES_USER: ${DB_TEST_USER}

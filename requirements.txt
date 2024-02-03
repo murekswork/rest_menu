@@ -1,3 +1,4 @@
+aioredis==2.0.1
 alembic==1.13.1
 annotated-types==0.6.0
 anyio==4.2.0
@@ -29,3 +30,4 @@ starlette==0.35.1
 tomli==2.0.1
 typing_extensions==4.9.0
 uvicorn==0.26.0
+pre-commit
