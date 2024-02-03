@@ -29,17 +29,17 @@ class TestMenuCacheServiceCreate(TestMenuCacheService):
         assert cached_menu['description'] == response_menu['description']
         assert cached_menu['id'] == response_menu['id']
 
-    # @pytest.mark.asyncio
-    # async def test_when_create_menu_menus_list_cache_updates(self,
-    #                                                          client: AsyncClient,
-    #                                                          redis_client: aioredis.Redis,
-    #                                                          clean_tables):
-    #     old_menus_list = (await client.get(await reverse("menus-read"))).json()
-    #     old_menus_list_cache = (await redis_client.get('menus'))
-    #     response = await client.post(await reverse("menu-create"),
-    #                                  json={"title": "title", "description": "description"})
-    #     new_menus_list_cache = (await redis_client.get('menus'))
-    #     assert new_menus_list_cache != old_menus_list_cache
+    @pytest.mark.asyncio
+    async def test_when_create_menu_menus_list_cache_updates(self,
+                                                             client: AsyncClient,
+                                                             redis_client: aioredis.Redis,
+                                                             clean_tables):
+        await client.get(await reverse('menus-read')).json()
+        old_menus_list_cache = (await redis_client.get('menus'))
+        await client.post(await reverse('menu-create'),
+                          json={'title': 'title', 'description': 'description'})
+        new_menus_list_cache = (await redis_client.get('menus'))
+        assert new_menus_list_cache != old_menus_list_cache
 
 
 class TestMenuCacheServiceDelete(TestMenuCacheService):
