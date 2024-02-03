@@ -8,7 +8,7 @@ from .crud import UUID, MenuCrud
 class MenuUTIL(MenuCrud):
 
     async def read_menu_with_counts(self, menu_id: UUID):
-        check_exist = await self.read_object(object_class=Menu, object_id=menu_id, object_name='menu')
+        check_exist = await self.read_object(object_class=Menu, object_id=menu_id)
         if check_exist is None:
             return None
         query = (select(
