@@ -18,7 +18,7 @@ from main import app
 sys.path.append('..')
 
 # create async engine for interaction with database
-test_engine = create_async_engine(settings.TEST_DATABASE_URL, future=True, echo=True)
+test_engine = create_async_engine(settings.TEST_DATABASE_URL, future=True, echo=False)
 
 # create async session for interaction with database
 test_async_session = sessionmaker(test_engine, expire_on_commit=False, class_=AsyncSession)
