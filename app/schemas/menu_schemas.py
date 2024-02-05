@@ -18,9 +18,9 @@ class MenuRead(TunedModel):
     id: UUID | str
     title: str
     description: str
-    dishes_count: int | None = 0
-    submenus_count: int | None = 0
-    submenus: list[SubmenuRead] | None = []
+    dishes_count: int = 0
+    submenus_count: int = 0
+    submenus: list[SubmenuRead] = []
 
     def get_counts(self):
         self.submenus_count = len(self.submenus)
@@ -33,8 +33,8 @@ class MenuListSchema(BaseModel):
 
 
 class MenuReadWithCount(MenuRead):
-    submenus_count: int | None = 0
-    dishes_count: int | None = 0
+    submenus_count: int = 0
+    dishes_count: int = 0
 
     def get_counts(self):
         self.submenus_count = len(self.submenus)
