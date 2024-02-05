@@ -109,8 +109,7 @@ class TestMenuCacheServiceDelete(TestMenuCacheService):
         assert menu.status_code == 201
         submenu = await client.post(await reverse('submenu-create', target_menu_id=menu.json()['id']),
                                     json={'title': 'title', 'description': 'description'})
-        await client.post(await reverse('submenu-create', target_submenu_id=submenu.json()['id']),
-                          json={'title': 'title', 'description': 'description'})
+        assert submenu.status_code == 201
         response = await client.get(await reverse('submenu-read-list', target_menu_id=menu.json()['id']))
         assert response.status_code == 200
         submenu_list_cache = await redis_client.get(f'{menu.json()["id"]}_submenus')
