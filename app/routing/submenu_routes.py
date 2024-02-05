@@ -20,7 +20,8 @@ submenu_router = APIRouter(tags=['submenu-router'])
 @submenu_router.get('/menus/{target_menu_id}/submenus',
                     status_code=200,
                     response_model=list[SubmenuRead],
-                    responses={404: {'description': 'Submenus parent menu not found'}},
+                    responses={404: {'description': 'Submenus parent menu not found',
+                                     'model': DatabaseErrorResponseSchema}},
                     name='submenu-read-list')
 async def submenus_read(
         target_menu_id: UUID,
