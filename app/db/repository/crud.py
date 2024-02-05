@@ -124,7 +124,8 @@ class MenuCrud(Repository):
         objects = (await self.db_session.execute(query))
 
         if objects is None:
-            raise HTTPException(status_code=404, detail=f'{object_class.__name__.lower()}s not found')
+            raise HTTPException(status_code=404, headers={'Error': 'Incorrect input!'},
+                                detail=f'{object_class.__name__.lower()}s not found')
 
         return objects.scalars().unique()
 
