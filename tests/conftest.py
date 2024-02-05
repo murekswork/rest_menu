@@ -74,10 +74,10 @@ async def get_redis():
         redis = aioredis.ConnectionPool.from_url(
             'redis://redis:6379', decode_responses=True
         )
-        logging.warning('Redis connection pool initialized successfully :)')
+        logging.warning('Redis connection pool opened successfully :)')
         return redis
     finally:
-        logging.warning('Could not initialize connection pool to redis!')
+        logging.warning('Redis connection closed!')
 
 
 @pytest.fixture(scope='session')
