@@ -61,7 +61,7 @@ class SubmenuService:
 
     async def create(self,
                      submenu_schema: SubmenuCreateWithMenuId,
-                     target_menu_id: UUID,
+                     target_menu_id: UUID | str,
                      background_tasks: BackgroundTasks) -> SubmenuRead:
         """
         Method takes id and schema of submenu, sends it to cache

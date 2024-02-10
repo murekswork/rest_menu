@@ -83,8 +83,8 @@ class DishService:
 
     async def create(self,
                      dish_schema: DishCreateWithSubmenuId,
-                     target_menu_id: UUID,
-                     target_submenu_id: UUID,
+                     target_menu_id: UUID | str,
+                     target_submenu_id: UUID | str,
                      background_tasks: BackgroundTasks
                      ) -> DishRead:
         """
