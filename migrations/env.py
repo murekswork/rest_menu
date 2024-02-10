@@ -1,5 +1,3 @@
-import sys
-
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
@@ -7,7 +5,6 @@ from app.db.models import Base
 
 config = context.config
 target_metadata = Base.metadata
-sys.path.append('..')
 
 
 def run_migrations_offline() -> None:
