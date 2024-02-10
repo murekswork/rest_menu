@@ -1,4 +1,6 @@
 import asyncio
+import json
+import logging
 
 import aioredis
 import gspread
@@ -122,7 +124,7 @@ class TaskService:
         It uses MenuService, SubmenuService, and DishService to interact with
         the database and cache services for creating menus, submenus, and dishes.
         """
-        if not menus_to_be_created:
+        if menus_to_be_created is []:
             return None
 
         menu_service = MenuService(
@@ -168,7 +170,17 @@ class TaskService:
                                 background_tasks=self.background_tasks
                             )
 
-    async def fill_dish_sales(self, sale_dishes: list[dict]) -> None:
+    async def delete_old_sales(self) -> None:
+        try:
+            old_sales = json.loads(
+                (await self.redis.get('sales_data')).replace("'", '"'))
+            for sale in old_sales:
+                await self.redis.delete(sale)
+            await self.redis.delete('sales_data', 'menus')
+        except Exception as e:
+            logging.warning(f'Could not delete old sales: {e}')
+
+    async def fill_new_sales(self, sale_dishes: list[dict]) -> None:
         """
         This method deletes existing sales data and menus from the cache, then
         fills in the sales data for each dish provided in the input list. It
@@ -176,7 +188,6 @@ class TaskService:
         description, stores the sales data for each dish in a dictionary, and
         updates the cache with the new sales data.
         """
-        await self.redis.delete('sales_data', 'menus')
         new_sales_data = {}
 
         for dish in sale_dishes:
@@ -186,8 +197,6 @@ class TaskService:
                 description=dish['description']
             )
             new_sales_data[f'{dish_id}'] = dish['sale']
-            await self.redis.delete(f'{dish_id}')
-
         await self.redis.set('sales_data', str(new_sales_data))
 
     async def align_sheet_and_db(self, table_data: dict):
@@ -213,12 +222,17 @@ class TaskService:
                 title=menu_sh['title'],
                 description=menu_sh['description']
             )
+            await self.db.commit()
             # get menu from db, if not - just skip iteration
             if not db_menu_id:
                 continue
             try:
-                menu = (await service.read(db_menu_id, self.background_tasks)
-                        ).model_dump()
+                menu = (await service.read(
+                    db_menu_id,
+                    self.background_tasks,
+                    _no_cache=True
+                )
+                ).model_dump()
                 # modify menu for comparing
                 menu_db = await self.prepare_menu_for_comparison(menu)
 
@@ -226,10 +240,12 @@ class TaskService:
                     # loop for compare each menu with value from database
                     # and if its equal remove from not existing list and add to
                     # correct menu id list
+                    logging.warning('Found equal values!')
                     menus_which_are_equal_in_db_and_sheet.append(
                         str(menu['id']))
                     not_existing_lists.remove(menu_sh)
-
+                else:
+                    logging.warning(f'Found not equal values!\n\n{menu_db}, \n\n{menu_sh}')
             except Exception as e:
                 print(e)
 
@@ -240,5 +256,6 @@ class TaskService:
             not_existing_lists)
 
         await self.background_tasks()
-        await self.fill_dish_sales(table_data['sales'])
+        await self.delete_old_sales()
+        await self.fill_new_sales(table_data['sales'])
         await self.db.close()

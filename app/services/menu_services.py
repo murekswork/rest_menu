@@ -114,19 +114,20 @@ class MenuService:
 
     async def read(self,
                    target_id: UUID,
-                   background_tasks: BackgroundTasks
-                   ) -> MenuRead:
+                   background_tasks: BackgroundTasks,
+                   _no_cache: bool = False) -> MenuRead:
         """
         Method checks if target id is in cache and returns if it exists
         otherwise sends menu id to database controller serializes into
         pydantic model and returns
         """
-        cached = await self.cache_manager.get_model_cache(
-            target_id,
-            MenuRead
-        )
-        if cached is not None:
-            return cached
+        if _no_cache is False:
+            cached = await self.cache_manager.get_model_cache(
+                target_id,
+                MenuRead
+            )
+            if cached is not None:
+                return cached
 
         object_db = await self.database_manager.read_object(
             object_id=target_id,
@@ -136,9 +137,16 @@ class MenuService:
         submenus_schemas = []
         for submenu in object_db.submenus:
             submenu_schema = SubmenuRead(**submenu.__dict__)
-            dishes_schemas = [await (DishRead(**dish.__dict__)
-                                     .check_sale(self.cache_manager))
-                              for dish in submenu.dishes]
+            # if __no_cache is true then this called from celery task, so no
+            # need to verify available sale
+            if _no_cache is False:
+                dishes_schemas = [await (DishRead(**dish.__dict__)
+                                         .check_sale(self.cache_manager))
+                                  for dish in submenu.dishes]
+            else:
+                dishes_schemas = [DishRead(**dish.__dict__)
+                                  for dish in submenu.dishes]
+
             submenu_schema.dishes = dishes_schemas
             submenu_schema.get_dishes_count()
             submenus_schemas.append(submenu_schema)
@@ -146,11 +154,12 @@ class MenuService:
         menu_schema.submenus = submenus_schemas
         menu_schema.get_counts()
 
-        background_tasks.add_task(
-            self.cache_manager.set_model_cache,
-            target_id,
-            menu_schema
-        )
+        if _no_cache is False:
+            background_tasks.add_task(
+                self.cache_manager.set_model_cache,
+                target_id,
+                menu_schema
+            )
         return menu_schema
 
     async def delete(self,

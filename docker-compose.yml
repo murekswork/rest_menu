@@ -14,6 +14,12 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
+      celery_worker:
+        condition: service_started
+      celery_beat:
+        condition: service_started
+      rabbitmq:
+        condition: service_started
     volumes:
       - ./.env:/api/.env
     networks:
@@ -121,7 +127,7 @@ services:
     entrypoint: celery
     command: -A celery_conf.celery_app.app worker --loglevel=info
     depends_on:
-      api:
+      rabbitmq:
         condition: service_started
     networks:
       - custom
