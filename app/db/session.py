@@ -6,9 +6,16 @@ from sqlalchemy.orm import sessionmaker
 
 import settings
 
-engine = create_async_engine(settings.REAL_DATABASE_URL, future=True, echo=True)
+engine = create_async_engine(
+    settings.REAL_DATABASE_URL,
+    future=True, echo=True
+)
 
-async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+async_session = sessionmaker(
+    engine,
+    expire_on_commit=False,
+    class_=AsyncSession
+)
 
 
 async def get_db() -> AsyncGenerator:
@@ -19,11 +26,15 @@ async def get_db() -> AsyncGenerator:
         await session.close()
 
 
-async def get_redis() -> AsyncGenerator:
-    try:
-        redis = aioredis.ConnectionPool.from_url(
-            'redis://redis:6379', decode_responses=True
-        )
-        yield redis
-    finally:
-        pass
+def create_redis():
+    return aioredis.ConnectionPool.from_url(
+        'redis://redis:6379',
+        decode_responses=True
+    )
+
+
+redis_pool = create_redis()
+
+
+def get_redis():
+    return aioredis.Redis(connection_pool=redis_pool)
