@@ -24,7 +24,8 @@ class MenuRead(TunedModel):
 
     def get_counts(self):
         self.submenus_count = len(self.submenus)
-        self.dishes_count = sum(submenu.dishes_count for submenu in self.submenus)
+        self.dishes_count = sum(
+            submenu.dishes_count for submenu in self.submenus)
         return self
 
 
@@ -38,7 +39,8 @@ class MenuReadWithCount(MenuRead):
 
     def get_counts(self):
         self.submenus_count = len(self.submenus)
-        self.dishes_count = sum(len(submenu.dishes) for submenu in self.submenus)
+        self.dishes_count = sum(
+            len(submenu.dishes) for submenu in self.submenus)
 
 
 class MenuCreate(BaseModel):

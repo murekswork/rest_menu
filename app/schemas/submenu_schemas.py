@@ -2,8 +2,9 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
+from app.schemas.dish_schemas import DishRead
+
 from .base_schemas import TunedModel
-from .dish_schemas import DishRead
 
 
 class SubmenuCreate(BaseModel):
