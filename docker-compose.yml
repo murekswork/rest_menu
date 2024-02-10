@@ -75,9 +75,6 @@ services:
       - custom
       - test
 
-
-
-
   postgres_test:
     image: postgres:15.1-alpine
     container_name: 'postgres_tes'
@@ -87,7 +84,6 @@ services:
       POSTGRES_PASSWORD: ${DB_TEST_PASSWORD}
       POSTGRES_DB: ${DB_TEST}
       POSTGRES_HOST_AUTH_METHOD: ${DB_TEST_AUTH_METHOD}
-
     ports:
       - 5433:5432
     expose:
@@ -101,6 +97,56 @@ services:
       interval: 10s
       timeout: 30s
       retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3.11.28-management
+    ports:
+      - 5672:5672
+      - 15672:15672
+    hostname: rabbitmq
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
+      RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: ${RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS}
+    env_file:
+      - .env
+    networks:
+      - custom
+      - test
+
+  celery_worker:
+    build:
+      context: .
+    entrypoint: celery
+    command: -A celery_conf.celery_app.app worker --loglevel=info
+    depends_on:
+      api:
+        condition: service_started
+    networks:
+      - custom
+      - test
+    volumes:
+      - ./env:/api/.env
+    env_file:
+      - .env
+
+  celery_beat:
+    build:
+      context: .
+    entrypoint: celery
+    command: -A celery_conf.celery_app beat --loglevel=info
+    networks:
+      - custom
+      - test
+    depends_on:
+      celery_worker:
+        condition: service_started
+    volumes:
+      - ./env:/api/.env
+    env_file:
+      - .env
+
 networks:
   custom:
     driver: bridge
