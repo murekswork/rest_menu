@@ -17,7 +17,7 @@ from app.services.menu_services import MenuService
 from app.services.submenu_services import SubmenuService
 
 
-class MenuManager:
+class MenuSyncHelper:
 
     def __init__(self,
                  database_manager,
