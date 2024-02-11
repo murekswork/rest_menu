@@ -7,13 +7,13 @@ app = Celery('tasks')
 
 # This beat_schedule dictionary creates schedule with task that calls
 # function  refresh_db_data every 15 seconds
-# app.conf.beat_schedule = {
-#     'run-every-15-seconds':
-#         {
-#             'task': 'celery_conf.celery_app.refresh_db_data',
-#             'schedule': 15.0,
-#         }
-# }
+app.conf.beat_schedule = {
+    'run-every-15-seconds':
+        {
+            'task': 'celery_conf.celery_app.refresh_db_data',
+            'schedule': 15.0,
+        }
+}
 
 
 @app.task
