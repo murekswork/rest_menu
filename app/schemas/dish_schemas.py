@@ -22,11 +22,10 @@ class DishRead(TunedModel):
         v = float(self.price)
 
         if sale is not None:
-            logging.warning(f'Sale for {self.title} is {v}')
+            logging.warning(f'Found sale for {self.title} is {sale}%')
             v -= (v * float(sale) / 100)
 
         self.price = ('%.2f' % v)
-        logging.info(f'Price for {self.title} is {self.price}')
         return self
 
 

@@ -6,7 +6,7 @@ from app.db.models import Dish, Menu, SubMenu
 from app.db.repository.crud import MenuCrud
 
 
-class AdvancedMenuManager(MenuCrud):
+class AdvancedMenuRepository(MenuCrud):
 
     async def read_by_kwargs(self,
                              obj_class: type[Menu | SubMenu | Dish],
@@ -27,4 +27,4 @@ class AdvancedMenuManager(MenuCrud):
         """Read all objects of passed class and return ids"""
         query = select(object_class.id)
         ids = await self.db_session.execute(query)
-        return [str(i) for (i, ) in ids]
+        return [str(i) for (i,) in ids]
