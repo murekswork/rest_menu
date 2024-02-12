@@ -4,7 +4,7 @@ from pydantic import BaseModel
 
 from app.schemas.dish_schemas import DishRead
 
-from .base_schemas import TunedModel
+from app.schemas.base_schemas import TunedModel
 
 
 class SubmenuCreate(BaseModel):

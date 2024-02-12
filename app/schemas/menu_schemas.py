@@ -2,8 +2,8 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
-from .base_schemas import TunedModel
-from .submenu_schemas import SubmenuRead
+from app.schemas.base_schemas import TunedModel
+from app.schemas.submenu_schemas import SubmenuRead
 
 
 class MenuReadCounts(TunedModel):

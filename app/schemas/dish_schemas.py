@@ -3,8 +3,7 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
-from app.services.cache.cache_service import CacheService
-from .base_schemas import TunedModel
+from app.schemas.base_schemas import TunedModel
 
 
 class DishRead(TunedModel):
@@ -17,7 +16,7 @@ class DishRead(TunedModel):
         self.price = ('%.2f' % float(self.price))
         return self
 
-    async def check_sale(self, cache: CacheService) -> 'DishRead':
+    async def check_sale(self, cache):
         """
         Function that checks for a sale discount in the cache
         service and updates the price of an item accordingly.
