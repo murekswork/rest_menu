@@ -5,7 +5,12 @@ from fastapi import BackgroundTasks, Depends
 from app.db.models import Menu
 from app.db.repository.crud import MenuCrud
 from app.schemas.dish_schemas import DishRead
-from app.schemas.menu_schemas import MenuCreate, MenuIdOnly, MenuRead, MenuReadCounts
+from app.schemas.menu_schemas import (
+    MenuCreate,
+    MenuIdOnly,
+    MenuRead,
+    MenuReadCounts
+)
 from app.schemas.submenu_schemas import SubmenuRead
 from app.services.cache.cache_service import MenuCacheService
 
@@ -54,7 +59,7 @@ class MenuService:
                         background_tasks: BackgroundTasks
                         ) -> list[MenuRead]:
         """
-        Function checks for saved cache data and returns if it exists
+        Method checks for saved cache data and returns if it exists
         return it, otherwise sends id to database manager, then saves
         received data and returns it
         """
@@ -163,7 +168,7 @@ class MenuService:
         return menu_schema
 
     async def delete(self,
-                     target_id: UUID,
+                     target_id: UUID | str,
                      background_tasks: BackgroundTasks
                      ) -> MenuIdOnly:
         """

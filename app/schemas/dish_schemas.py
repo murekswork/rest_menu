@@ -3,6 +3,7 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
+from app.services.cache.cache_service import CacheService
 from .base_schemas import TunedModel
 
 
@@ -12,11 +13,15 @@ class DishRead(TunedModel):
     description: str
     price: float | str
 
-    def round_price(self):
+    def round_price(self) -> 'DishRead':
         self.price = ('%.2f' % float(self.price))
         return self
 
-    async def check_sale(self, cache):
+    async def check_sale(self, cache: CacheService) -> 'DishRead':
+        """
+        Function that checks for a sale discount in the cache
+        service and updates the price of an item accordingly.
+        """
         sale = await cache.check_sale(self.id)
 
         v = float(self.price)
@@ -24,8 +29,8 @@ class DishRead(TunedModel):
         if sale is not None:
             logging.warning(f'Found sale for {self.title} is {sale}%')
             v -= (v * float(sale) / 100)
-
         self.price = ('%.2f' % v)
+
         return self
 
 

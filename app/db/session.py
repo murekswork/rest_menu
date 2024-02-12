@@ -26,7 +26,7 @@ async def get_db() -> AsyncGenerator:
         await session.close()
 
 
-def create_redis():
+def create_redis() -> aioredis.ConnectionPool:
     return aioredis.ConnectionPool.from_url(
         'redis://redis:6379',
         decode_responses=True
@@ -36,5 +36,5 @@ def create_redis():
 redis_pool = create_redis()
 
 
-def get_redis():
+def get_redis() -> aioredis.Redis:
     return aioredis.Redis(connection_pool=redis_pool)

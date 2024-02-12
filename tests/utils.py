@@ -9,8 +9,8 @@ app_routes = app.routes
 
 async def reverse(route_name: str, **kwargs: Any) -> str:
     """
-    Function takes route and optionally kwargs, then checks for existence of route in app routes
-    and returns route url if exists, otherwise raises exception
+    Function takes route and optionally kwargs, then checks for existence of
+    route in app routes and returns route url if exists, otherwise raises exception
     """
     for route in app_routes:
         if isinstance(route, APIRoute) and route.name == route_name:

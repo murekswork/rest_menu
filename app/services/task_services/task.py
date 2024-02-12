@@ -1,16 +1,20 @@
 import logging
+from typing import Any
 
+import aioredis
 from fastapi import BackgroundTasks
 
 from app.db.models import Menu
 from app.services.menu_services import MenuService
+from app.db.repository.utils import AdvancedMenuRepository
 
 from .menu_utils import MenuModifier
 from .sheet_deserialization_service import SheetDeserializationService
 from .sheet_parsing_service import SheetParsingInterface
+from ..cache.cache_service import CacheService
 
 
-async def parse_data(creds_path: str, url: str):
+async def parse_data(creds_path: str, url: str) -> list[list]:
     """
     Function takes path to credentials file and url for sheet, then authenticates
     user with giver credentials and return parsed data
@@ -30,7 +34,7 @@ async def prepare_data(sheet_data: list[list]) -> dict[list[dict], list[dict]]:
     return objects
 
 
-async def prepare_menu_for_comparison(menu):
+async def prepare_menu_for_comparison(menu: dict[str, str]) -> dict[str, str]:
     """
     Function takes specific menu from database then call create menu modifier
     class and call prepare_menu_for_comparison method and returns modified menu
@@ -41,9 +45,9 @@ async def prepare_menu_for_comparison(menu):
 
 
 async def compare_sheet_and_db(sheet_objects: list,
-                               db_manager,
-                               cache_manager,
-                               background_tasks: BackgroundTasks):
+                               db_manager: AdvancedMenuRepository,
+                               cache_manager: type(CacheService),
+                               background_tasks: BackgroundTasks) -> dict[str, Any]:
     """
     This function iterates over list with menus from sheet and compares each
     menu against existing  values in database, then fill 2 lists:
@@ -59,7 +63,7 @@ async def compare_sheet_and_db(sheet_objects: list,
 
     for menu_sheet in sheet_objects:
 
-        db_menu_id = await db_manager.read_by_kwargs(
+        db_menu_id = await db_manager.read_by_title_description(
             Menu,
             menu_sheet['title'],
             menu_sheet['description']

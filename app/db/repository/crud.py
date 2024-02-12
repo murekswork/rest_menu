@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Sequence
 from uuid import UUID
 
 from fastapi import Depends, HTTPException
@@ -54,7 +54,7 @@ class MenuCrud(Repository):
             object_class: type[Menu | SubMenu | Dish],
             object_schema: BaseModel,
             parent_class: type[Menu | SubMenu | Dish] | None = None,
-            parent_id: UUID | None = None) -> Menu | SubMenu | Dish:
+            parent_id: UUID | None = None) -> Any:
         """
 
         The create_object function is used to create a new object based on a
@@ -78,7 +78,7 @@ class MenuCrud(Repository):
                 parent_class.id == parent_id)
             check_result = (await self.db_session.execute(
                 check_parent_exist_query)
-            ).scalar()
+                            ).scalar()
             if check_result is None:
                 raise HTTPException(
                     status_code=404,
@@ -92,7 +92,8 @@ class MenuCrud(Repository):
     async def read_object(
             self,
             object_id: UUID,
-            object_class: type[Menu | SubMenu | Dish]) -> Any:
+            object_class: type[Menu | SubMenu | Dish]
+    ) -> Any:
         """
         The read_object function is used to retrieve an object from the
         database based on its name, ID, and class. It supports loading related
@@ -133,7 +134,8 @@ class MenuCrud(Repository):
 
     async def read_objects(
             self,
-            object_class: type[Menu | SubMenu | Dish], **ids) -> Any:
+            object_class: type[Menu | SubMenu | Dish], **ids
+    ) -> Any:
         """
         The read_objects function is used to retrieve objects from the database
         based on their name, class, and additional IDs. It supports loading
@@ -171,10 +173,11 @@ class MenuCrud(Repository):
 
         return objects.scalars().unique()
 
-    async def update_object(self,
-                            object_id: UUID,
-                            object_class: type[Menu | SubMenu | Dish],
-                            object_schema: BaseModel) -> Any:
+    async def update_object(
+            self,
+            object_id: UUID,
+            object_class: type[Menu | SubMenu | Dish],
+            object_schema: BaseModel) -> Any:
         """
         The update_object function is used to update an object in the database
         based on its ID, class, and schema.
@@ -240,7 +243,8 @@ class MenuCrud(Repository):
         await self.db_session.commit()
         return True
 
-    async def read_menu_with_counts(self, menu_id: UUID):
+    async def read_menu_with_counts(self, menu_id: UUID
+                                    ) -> tuple[Any] | None:
         check_exist = await self.read_object(object_class=Menu,
                                              object_id=menu_id)
         if check_exist is None:
@@ -252,10 +256,10 @@ class MenuCrud(Repository):
             func.count(distinct(SubMenu.id)).label('submenu_count'),
             func.count(distinct(Dish.id)).label('dish_count')
         ).select_from(Menu)
-            .outerjoin(SubMenu, SubMenu.menu_id == Menu.id)
-            .outerjoin(Dish, Dish.submenu_id == SubMenu.id)
-            .where(Menu.id == menu_id)
-            .group_by(Menu.id))
+                 .outerjoin(SubMenu, SubMenu.menu_id == Menu.id)
+                 .outerjoin(Dish, Dish.submenu_id == SubMenu.id)
+                 .where(Menu.id == menu_id)
+                 .group_by(Menu.id))
         result = (await self.db_session.execute(query)).fetchone()
         await self.db_session.commit()
         return result

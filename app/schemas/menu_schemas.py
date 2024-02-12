@@ -22,7 +22,13 @@ class MenuRead(TunedModel):
     submenus_count: int = 0
     submenus: list[SubmenuRead] = []
 
-    def get_counts(self):
+    def get_counts(self) -> 'MenuRead':
+        """
+        This method get_counts calculates the number of submenus and dishes
+        within a menu and updates the corresponding counts in the MenuRead
+        object. The method returns the updated MenuRead object with the counts
+        included.
+        """
         self.submenus_count = len(self.submenus)
         self.dishes_count = sum(
             submenu.dishes_count for submenu in self.submenus)
@@ -36,11 +42,6 @@ class MenuListSchema(BaseModel):
 class MenuReadWithCount(MenuRead):
     submenus_count: int = 0
     dishes_count: int = 0
-
-    def get_counts(self):
-        self.submenus_count = len(self.submenus)
-        self.dishes_count = sum(
-            len(submenu.dishes) for submenu in self.submenus)
 
 
 class MenuCreate(BaseModel):

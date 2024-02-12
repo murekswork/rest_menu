@@ -29,7 +29,8 @@ class CacheService:
         serialized_list = [val.model_dump_json() for val in value]
         await self.cache.set(str(key), json.dumps(serialized_list))
 
-    async def get_model_cache(self, key: str | UUID,
+    async def get_model_cache(self,
+                              key: str | UUID,
                               schema: type[BaseModel]) -> BaseModel | None:
         """Function checks for cache wth received key and return schema or None"""
         value = await self.cache.get(str(key))
@@ -38,9 +39,10 @@ class CacheService:
         result = await self.serialize_schema(value, schema)
         return result
 
-    async def get_model_list_cache(self, key: str | None,
-                                   schema: type[BaseModel]) -> list[
-            BaseModel] | None:
+    async def get_model_list_cache(self,
+                                   key: str | None,
+                                   schema: type[BaseModel]
+                                   ) -> list[BaseModel] | None:
         """
         Function used to get many cached schemas it checks for cache with received key
         and returns list of schemas value or None
@@ -54,7 +56,7 @@ class CacheService:
     async def set_model_cache(self, key: UUID, value: type[BaseModel]) -> None:
         await self.cache.set(str(key), await self.deserialize_schema(value))
 
-    async def check_sale(self, dish_id: UUID):
+    async def check_sale(self, dish_id: UUID) -> None | str:
         sales_data = await self.cache.get('sales_data')
 
         if sales_data is None:
@@ -144,10 +146,3 @@ class DishCacheService(CacheService):
                                                        f'{menu_key}_submenus',
                                                        f'{submenu_key}_dishes',
                                                        ]]
-
-    # async def check_sale(self, dish: DishRead):
-    #     sales_table = json.loads((await self.cache.get('sales_data')).replace("'", '"'))
-    #     if str(dish.id) not in sales_table:
-    #         return dish
-    #     dish.price = str(float(dish.price) - float(sales_table[str(dish.id)]) * 0.01 * float(dish.price))
-    #     return dish

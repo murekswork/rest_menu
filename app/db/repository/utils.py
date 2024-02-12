@@ -8,7 +8,7 @@ from app.db.repository.crud import MenuCrud
 
 class AdvancedMenuRepository(MenuCrud):
 
-    async def read_by_kwargs(self,
+    async def read_by_title_description(self,
                              obj_class: type[Menu | SubMenu | Dish],
                              title: str,
                              description: str) -> UUID | None:
@@ -23,7 +23,8 @@ class AdvancedMenuRepository(MenuCrud):
             return obj.id
         return None
 
-    async def get_all_ids(self, object_class: type[Menu | SubMenu | Dish]):
+    async def get_all_ids(self, object_class: type[Menu | SubMenu | Dish]
+                          ) -> list[str]:
         """Read all objects of passed class and return ids"""
         query = select(object_class.id)
         ids = await self.db_session.execute(query)

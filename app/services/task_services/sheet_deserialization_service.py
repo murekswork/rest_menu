@@ -28,7 +28,7 @@ class SheetDeserializationService:
         }
 
     @staticmethod
-    def create_sale(row):
+    def create_sale(row) -> dict:
         """Make a sale object from sheet row"""
         return {
             'title': row[3],

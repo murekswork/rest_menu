@@ -1,12 +1,13 @@
 import asyncio
 import logging
 
+import aioredis
 from fastapi import BackgroundTasks
 
 from app.db.models import Menu
 from app.schemas.dish_schemas import DishCreateWithSubmenuId
-from app.schemas.menu_schemas import MenuCreate
-from app.schemas.submenu_schemas import SubmenuCreateWithMenuId
+from app.schemas.menu_schemas import MenuCreate, MenuRead
+from app.schemas.submenu_schemas import SubmenuCreateWithMenuId, SubmenuRead
 from app.services.cache.cache_service import (
     DishCacheService,
     MenuCacheService,
@@ -15,14 +16,15 @@ from app.services.cache.cache_service import (
 from app.services.dish_services import DishService
 from app.services.menu_services import MenuService
 from app.services.submenu_services import SubmenuService
+from app.db.repository.utils import AdvancedMenuRepository
 
 
 class MenuSyncHelper:
 
     def __init__(self,
-                 database_manager,
-                 redis,
-                 background_tasks: BackgroundTasks):
+                 database_manager: AdvancedMenuRepository,
+                 redis: aioredis.Redis,
+                 background_tasks: BackgroundTasks) -> None:
 
         self.database_manager = database_manager
         self.redis = redis
@@ -37,7 +39,8 @@ class MenuSyncHelper:
         self.DishService = DishService(self.database_manager,
                                        DishCacheService(self.redis))
 
-    async def delete_menus_which_must_not_exist(self, correct_menus):
+    async def delete_menus_which_must_not_exist(
+            self, correct_menus: list[str]) -> None:
         """
         Deletes menus from the database that are not in the correct_menus list.
         """
@@ -49,7 +52,8 @@ class MenuSyncHelper:
                                               self.background_tasks)
         await self.background_tasks()
 
-    async def populate_menus_which_must_exist(self, menus_to_be_created: list):
+    async def populate_menus_which_must_exist(
+            self, menus_to_be_created: list[dict]) -> None:
         """
         If the list of correct_menus is empty, the method returns None.
         For each menu in the correct_menus list, the method attempts to create
@@ -65,7 +69,7 @@ class MenuSyncHelper:
             await self.create_submenus(new_menu, menu['submenus'])
         await self.background_tasks()
 
-    async def create_menu(self, menu_data):
+    async def create_menu(self, menu_data: dict) -> MenuRead:
         """Create specific menu in database"""
         new_menu = await self.MenuService.create(
             MenuCreate(title=menu_data['title'],
@@ -73,7 +77,8 @@ class MenuSyncHelper:
             background_tasks=self.background_tasks)
         return new_menu
 
-    async def create_submenus(self, menu, submenus_data):
+    async def create_submenus(
+            self, menu: MenuRead, submenus_data: list[dict]) -> None:
         """Create specific submenu and dishes if it has in database"""
         if not submenus_data:
             return
@@ -82,7 +87,8 @@ class MenuSyncHelper:
             new_submenu = await self.create_submenu(menu, submenu_data)
             await self.create_dishes(menu, new_submenu, submenu_data['dishes'])
 
-    async def create_submenu(self, menu, submenu_data):
+    async def create_submenu(self, menu: MenuRead,
+                             submenu_data: dict) -> SubmenuRead:
         """Create specific submenu in database"""
         new_submenu = await self.SubmenuService.create(
             target_menu_id=menu.id,
@@ -93,7 +99,10 @@ class MenuSyncHelper:
             background_tasks=self.background_tasks)
         return new_submenu
 
-    async def create_dishes(self, menu, submenu, dishes_data):
+    async def create_dishes(self,
+                            menu: MenuRead,
+                            submenu: SubmenuRead,
+                            dishes_data: list[dict]) -> None:
         """Create submenus dishes in database"""
         if not dishes_data:
             return
@@ -112,7 +121,7 @@ class MenuSyncHelper:
 
 class MenuModifier:
 
-    async def remove_ids_and_change_prices(self, obj):
+    async def remove_ids_and_change_prices(self, obj: dict) -> None:
         """
         Method removes id fields from menu and its sub objects,
         and converts dishes prices to float for future comparison
@@ -129,7 +138,7 @@ class MenuModifier:
             await asyncio.gather(
                 *(self.remove_ids_and_change_prices(item) for item in obj))
 
-    async def prepare_menu_for_comparison(self, menu):
+    async def prepare_menu_for_comparison(self, menu_dict: dict) -> dict:
         """Method takes makes it copy and sends to remove_id_fields method"""
-        await self.remove_ids_and_change_prices(menu)
-        return menu
+        await self.remove_ids_and_change_prices(menu_dict)
+        return menu_dict

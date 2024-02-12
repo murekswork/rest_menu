@@ -3,7 +3,12 @@ from uuid import UUID
 from fastapi import APIRouter, BackgroundTasks, Depends
 
 from app.schemas.errors import DatabaseErrorResponseSchema
-from app.schemas.menu_schemas import MenuCreate, MenuIdOnly, MenuRead, MenuReadCounts
+from app.schemas.menu_schemas import (
+    MenuCreate,
+    MenuIdOnly,
+    MenuRead,
+    MenuReadCounts
+)
 from app.services.menu_services import MenuService
 
 menu_router = APIRouter(tags=['menu-router'])
